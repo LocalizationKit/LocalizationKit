@@ -13,9 +13,10 @@ await context.SetCultureAsync("it-IT");   // every bound string on screen update
 compiled PRI — which is what makes switching language a dictionary swap instead of a restart. JSON
 and YAML providers are available too, and writing another is one interface.
 
-> **Status:** 0.1, pre-release. The library is feature-complete against its roadmap and covered by
-> 367 tests, including CLDR plural conformance across 285 locales. Nothing is published to NuGet
-> yet, so the package references below do not resolve until the first release.
+> **Status:** 0.1.0, the first public release. Everything described below is implemented and
+> covered by 367 tests, including CLDR plural conformance across 285 locales. The version is 0.x
+> because the API has not yet been used by anyone outside the project that prompted it: expect it
+> to settle rather than grow, and expect breaking changes before 1.0.
 
 ## Contents
 
