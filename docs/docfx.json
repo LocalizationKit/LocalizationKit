@@ -3,60 +3,18 @@
 
   "metadata": [
     {
-      "//": "The cross-platform libraries. One target framework has to be named, because these all multi-target and the metadata step cannot read two at once.",
+      "//": "One entry, so one api/toc.yml. Separate entries all write to the same dest and the last one wins, which silently leaves the API navigation showing a single package.",
       "src": [
         {
           "src": "../src",
-          "files": [
-            "LocalizationKit/LocalizationKit.csproj",
-            "LocalizationKit.Resources.Resw/LocalizationKit.Resources.Resw.csproj",
-            "LocalizationKit.Resources.Json/LocalizationKit.Resources.Json.csproj",
-            "LocalizationKit.Resources.Yaml/LocalizationKit.Resources.Yaml.csproj",
-            "LocalizationKit.Messages.Icu/LocalizationKit.Messages.Icu.csproj",
-            "LocalizationKit.StringLocalizer/LocalizationKit.StringLocalizer.csproj",
-            "LocalizationKit.AspNetCore/LocalizationKit.AspNetCore.csproj",
-            "LocalizationKit.Tooling/LocalizationKit.Tooling.csproj"
+          "files": ["*/*.csproj"],
+          "exclude": [
+            "LocalizationKit.Build/**",
+            "LocalizationKit.Generators/**"
           ]
         }
       ],
       "dest": "api",
-      "properties": { "TargetFramework": "net10.0" },
-      "allowCompilationErrors": false
-    },
-    {
-      "//": "WPF: a -windows framework, so this part of the reference can only be generated on Windows.",
-      "src": [
-        {
-          "src": "../src",
-          "files": ["LocalizationKit.Wpf/LocalizationKit.Wpf.csproj"]
-        }
-      ],
-      "dest": "api",
-      "properties": { "TargetFramework": "net10.0-windows" },
-      "allowCompilationErrors": false
-    },
-    {
-      "//": "WinUI: single-targeted, and Windows-only for the same reason.",
-      "src": [
-        {
-          "src": "../src",
-          "files": ["LocalizationKit.WinUI/LocalizationKit.WinUI.csproj"]
-        }
-      ],
-      "dest": "api",
-      "properties": { "TargetFramework": "net8.0-windows10.0.19041.0" },
-      "allowCompilationErrors": false
-    },
-    {
-      "//": "MAUI: needs `dotnet workload restore` before this runs, and the Windows head is the one target that needs no mobile SDK.",
-      "src": [
-        {
-          "src": "../src",
-          "files": ["LocalizationKit.Maui/LocalizationKit.Maui.csproj"]
-        }
-      ],
-      "dest": "api",
-      "properties": { "TargetFramework": "net10.0-windows10.0.19041.0" },
       "allowCompilationErrors": false
     }
   ],
@@ -69,9 +27,6 @@
       }
     ],
     "resource": [
-      {
-        "files": ["images/**"]
-      },
       {
         "//": "The editor, served from the site. It is one self-contained page, and over HTTPS it gets the File System Access API — so it opens and saves .resw files directly, with nothing to install. Copied verbatim rather than templated: the same file the Visual Studio tool window loads.",
         "src": "../tools/LocalizationKit.Editor",
