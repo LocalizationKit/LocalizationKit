@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Localization" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\LocalizationKit.StringLocalizer\LocalizationKit.StringLocalizer.csproj" />
+    <ProjectReference Include="..\..\src\LocalizationKit.Messages.Icu\LocalizationKit.Messages.Icu.csproj" />
+  </ItemGroup>
+
+</Project>

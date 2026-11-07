@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net10.0-android;net10.0-ios;net10.0-maccatalyst;net10.0-windows10.0.19041.0</TargetFrameworks>
+    <UseMaui>true</UseMaui>
+    <!-- The MAUI workload adds its own package references with its own versions. Central package
+         management then has no PackageVersion for them and they are dropped, leaving a project that
+         says UseMaui and cannot see a single MAUI type. -->
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+    <SingleProject>true</SingleProject>
+    <PackageId>LocalizationKit.Maui</PackageId>
+    <Description>MAUI integration for LocalizationKit: {loc:Text Key=Common.Save} in XAML, with values that follow a language change because the markup extension returns a binding.</Description>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
+    <!-- The AOT analysers have nothing to say about a MAUI library that the MAUI SDK does not already
+         say, and they disagree with its own generated code. -->
+    <IsAotCompatible>false</IsAotCompatible>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Stated rather than implied: since .NET 8 the workload no longer adds it for you,
+         and the version is the workload's own, which is why this project stays outside
+         central package management. -->
+    <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LocalizationKit\LocalizationKit.csproj" />
+  </ItemGroup>
+
+</Project>

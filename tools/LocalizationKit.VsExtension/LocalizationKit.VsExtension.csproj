@@ -1,0 +1,137 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="Current" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!--
+    A classic VSIX, deliberately. Visual Studio's newer out-of-process extensibility model builds a
+    tool window's contents through Remote UI, which has no documented way to hold a WebView2 and talk
+    to it; this model hosts the control directly and the host-to-page messages that the editor needs
+    are a supported part of it.
+
+    Not built by the solution: it needs full MSBuild rather than `dotnet build`, so it is built on its
+    own. See the README.
+  -->
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{6D6B1C8E-6E37-4C74-9E9D-0D0C33B8B8F1}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>LocalizationKit.VsExtension</RootNamespace>
+    <AssemblyName>LocalizationKit.VsExtension</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <GeneratePkgDefFile>true</GeneratePkgDefFile>
+    <!-- Without this the generated pkgdef identifies the package by assembly name, which is how a
+         package in the GAC is found. This one is not in the GAC: it sits in the extension's own
+         folder, so the registration has to carry a CodeBase pointing there. Otherwise Visual Studio
+         never loads the assembly, and because the menu definition is an embedded resource inside it,
+         no command appears anywhere — no Tools entry, nothing in the search box. -->
+    <UseCodebase>true</UseCodebase>
+    <IncludeAssemblyInVSIXContainer>true</IncludeAssemblyInVSIXContainer>
+    <IncludeDebugSymbolsInVSIXContainer>false</IncludeDebugSymbolsInVSIXContainer>
+    <CopyBuildOutputToOutputDirectory>true</CopyBuildOutputToOutputDirectory>
+    <CreateVsixContainer>true</CreateVsixContainer>
+    <DeployExtension>false</DeployExtension>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <!-- The kit's own repo-wide settings are written for the libraries, and this is a .NET Framework
+         VSIX built with Visual Studio's MSBuild: no central package versions (the VS SDK packages are
+         this project's alone), no AOT claim, nothing to pack, and the VS SDK's own analyzers have
+         opinions that are not worth failing a build over. -->
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+    <IsPackable>false</IsPackable>
+    <IsAotCompatible>false</IsAotCompatible>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!-- A legacy-format project states its own output paths; the SDK projects get theirs from the SDK. -->
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- A tool window's contents are WPF, and a legacy project names the assemblies it uses. -->
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Design" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="EditorToolWindow.cs" />
+    <Compile Include="EditorToolWindowControl.cs" />
+    <Compile Include="LocalizationKitPackage.cs" />
+    <Compile Include="ResourceFiles.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="source.extension.vsixmanifest">
+      <SubType>Designer</SubType>
+    </None>
+    <Content Include="LICENSE">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="icon.png">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <VSCTCompile Include="LocalizationKitPackage.vsct">
+      <ResourceName>Menus.ctmenu</ResourceName>
+    </VSCTCompile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- One copy of the page: the same file the browser opens is the file the tool window loads. -->
+    <Content Include="..\LocalizationKit.Editor\index.html">
+      <Link>Editor\index.html</Link>
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.12.2069">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.9.37000" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2592.51" />
+  </ItemGroup>
+
+  <!--
+    WebView2's managed assemblies call into a native loader, which Visual Studio does not have lying
+    anywhere this extension can reach, so it travels with the extension. Both architectures Visual
+    Studio runs as, at the path the managed code looks in.
+  -->
+  <Target Name="IncludeWebView2Loader" BeforeTargets="GetVsixSourceItems">
+    <ItemGroup>
+      <VSIXSourceItem Include="$(OutDir)runtimes\win-x64\native\WebView2Loader.dll" Condition="Exists('$(OutDir)runtimes\win-x64\native\WebView2Loader.dll')">
+        <VSIXSubPath>runtimes\win-x64\native</VSIXSubPath>
+      </VSIXSourceItem>
+      <VSIXSourceItem Include="$(OutDir)runtimes\win-arm64\native\WebView2Loader.dll" Condition="Exists('$(OutDir)runtimes\win-arm64\native\WebView2Loader.dll')">
+        <VSIXSubPath>runtimes\win-arm64\native</VSIXSubPath>
+      </VSIXSourceItem>
+    </ItemGroup>
+  </Target>
+
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="Exists('$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets')" />
+
+</Project>

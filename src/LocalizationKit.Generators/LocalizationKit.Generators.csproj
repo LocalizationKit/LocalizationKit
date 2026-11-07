@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- netstandard2.0 is not a choice: an analyzer is loaded into the compiler, which runs on
+         .NET Framework inside Visual Studio and on .NET in the SDK. That is also why this project
+         shares no code with the libraries. -->
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <!-- Shipped inside the LocalizationKit.Build package, which already owns the MSBuild plumbing
+         this generator needs, so it is not a package of its own. -->
+    <IsPackable>false</IsPackable>
+    <IsAotCompatible>false</IsAotCompatible>
+    <IncludeSymbols>false</IncludeSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Release tracking for the diagnostics this generator reports; RS2008 asks for it, and it is
+         the file a consumer can look up a rule id in. -->
+    <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+</Project>

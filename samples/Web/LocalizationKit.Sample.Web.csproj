@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <RootNamespace>LocalizationKit.Sample.Web</RootNamespace>
+    <!-- The Web SDK turns packing back on; a sample is not a package. -->
+    <IsPackable>false</IsPackable>
+    <!-- This sample does not claim AOT, and the reason is worth knowing: minimal-API lambdas and
+         Results.Json need the request-delegate generator and a JsonSerializerContext before a
+         trimmer can see through them. That is the application's business, not the kit's, and
+         LocalizationKit.AspNetCore itself is built with the analyzers on. Where the kit's own claim
+         is checked against a real trimmer and a real AOT compiler is the console sample. -->
+    <IsAotCompatible>false</IsAotCompatible>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\LocalizationKit.AspNetCore\LocalizationKit.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\src\LocalizationKit.Messages.Icu\LocalizationKit.Messages.Icu.csproj" />
+    <ProjectReference Include="..\..\src\LocalizationKit.Resources.Json\LocalizationKit.Resources.Json.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Update, not Include: the Web SDK already globs json content, and including it twice is an
+         error. -->
+    <Content Update="Localization\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

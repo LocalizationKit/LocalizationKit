@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Windows, because that is the one MAUI platform whose binding engine can be exercised in a
+         plain test process on this machine; the engine is shared across all of them. -->
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <UseMaui>true</UseMaui>
+    <SingleProject>true</SingleProject>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+    <IsAotCompatible>false</IsAotCompatible>
+    <OutputType>Library</OutputType>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- tests/Directory.Build.props already adds the test packages; this project only has to say
+         which versions, since it is outside central package management for the MAUI workload's sake. -->
+    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Update="xunit" Version="2.9.3" />
+    <PackageReference Update="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\LocalizationKit.Maui\LocalizationKit.Maui.csproj" />
+  </ItemGroup>
+
+</Project>

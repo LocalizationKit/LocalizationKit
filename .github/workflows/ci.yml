@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    # Windows, because LocalizationKit.WinUI targets net8.0-windows and the tooling writes files
+    # whose exact bytes (BOM, CRLF) are asserted on Windows.
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      # The MAUI integration targets android, iOS, Mac Catalyst and Windows, so the build needs those
+      # workloads before it can restore.
+      - name: Install workloads
+        run: dotnet workload restore LocalizationKit.slnx
+
+      - name: Restore
+        run: dotnet restore LocalizationKit.slnx
+
+      - name: Build
+        run: dotnet build LocalizationKit.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test LocalizationKit.slnx --configuration Release --no-build --logger "trx;LogFileName=tests.trx"
+
+      - name: Pack
+        run: dotnet pack LocalizationKit.slnx --configuration Release --no-build --output artifacts
+
+      # Publishing the console sample is how the trimming and native-AOT claim is checked: the
+      # analyzers run on every build, but only a real trimmer decides what is actually removed, and
+      # only running the result shows whether the ICU rules and the resource providers survived it.
+      # The sample exits non-zero when any of its checks fail.
+      - name: Publish the console sample, trimmed
+        run: dotnet publish samples/Console/LocalizationKit.Sample.Console.csproj --configuration Release --runtime win-x64 --output artifacts/trimmed
+
+      - name: Run the trimmed sample
+        run: ./artifacts/trimmed/LocalizationKit.Sample.Console.exe
+
+      - name: Publish the console sample with native AOT
+        run: dotnet publish samples/Console/LocalizationKit.Sample.Console.csproj --configuration Release --runtime win-x64 -p:PublishAot=true --output artifacts/aot
+
+      - name: Run the native sample
+        run: ./artifacts/aot/LocalizationKit.Sample.Console.exe
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: packages
+          path: artifacts/*.nupkg
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: "**/*.trx"

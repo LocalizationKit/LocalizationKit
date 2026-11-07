@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <!-- The framework reference already brings Microsoft.Extensions.DependencyInjection with it. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\LocalizationKit.AspNetCore\LocalizationKit.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\src\LocalizationKit.Messages.Icu\LocalizationKit.Messages.Icu.csproj" />
+  </ItemGroup>
+
+</Project>

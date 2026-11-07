@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <PackageId>LocalizationKit.Messages.Icu</PackageId>
+    <Description>ICU MessageFormat support for LocalizationKit: CLDR pluralization, ordinals, gender selection and in-message number and date formatting, behind the IMessageFormatter seam.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Rh.MessageFormat" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LocalizationKit\LocalizationKit.csproj" />
+  </ItemGroup>
+
+</Project>

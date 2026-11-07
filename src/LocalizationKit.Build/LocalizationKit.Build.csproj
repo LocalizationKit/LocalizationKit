@@ -1,0 +1,82 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Nothing is compiled into this package; the TargetFramework only satisfies the SDK. -->
+    <TargetFramework>net8.0</TargetFramework>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <!-- No assembly ships, so there is nothing for a symbol package to hold: leaving it on
+         fails the pack with NU5017. -->
+    <IncludeSymbols>false</IncludeSymbols>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <DevelopmentDependency>true</DevelopmentDependency>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <PackageId>LocalizationKit.Build</PackageId>
+    <Description>Build-time integration for LocalizationKit: validates .resw resources on every build, and can reconcile the local Visual Studio files. Carries its own copy of the command line tool, so nothing has to be installed first.</Description>
+    <!-- NU5128: a package with build assets and no lib folder is exactly what this one is. -->
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);_PackLocalizationKitCli</TargetsForTfmSpecificContentInPackage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Only for build order: nothing here is referenced or declared as a dependency, but the CLI and
+         the key generator have to exist before this package can carry them. -->
+    <ProjectReference Include="..\..\tools\LocalizationKit.Cli\LocalizationKit.Cli.csproj"
+                      SetTargetFramework="TargetFramework=net8.0"
+                      ReferenceOutputAssembly="false"
+                      PrivateAssets="all" />
+    <ProjectReference Include="..\LocalizationKit.Generators\LocalizationKit.Generators.csproj"
+                      ReferenceOutputAssembly="false"
+                      PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- build/ is read by a project that references this package directly, buildTransitive/ by one
+         that gets it through another package. The same two files go in both places. -->
+    <None Include="build\LocalizationKit.Build.props" Pack="true" PackagePath="build\;buildTransitive\" />
+    <None Include="build\LocalizationKit.Build.targets" Pack="true" PackagePath="build\;buildTransitive\" />
+  </ItemGroup>
+
+  <!--
+    The tool ships inside the package rather than being installed separately, so a clone builds with
+    validation on and no setup step. net8.0 is deliberate: it is the lowest framework the kit targets,
+    and the CLI's RollForward lets it run on whatever newer runtime the machine has.
+  -->
+  <Target Name="_PackLocalizationKitCli">
+    <!-- GetTargetPath reports where the output is without building it, which is what makes this work
+         under a pack that was told not to build, the way CI runs it. Asking for Build there fails the
+         pack with NETSDK1085 and the package is produced without its tool. The ProjectReference above
+         is what guarantees the output is there to find. -->
+    <MSBuild Projects="..\..\tools\LocalizationKit.Cli\LocalizationKit.Cli.csproj"
+             Targets="GetTargetPath"
+             Properties="TargetFramework=net8.0;Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" ItemName="_LocalizationKitCliOutput" />
+    </MSBuild>
+
+    <PropertyGroup>
+      <_LocalizationKitCliDirectory>%(_LocalizationKitCliOutput.RootDir)%(_LocalizationKitCliOutput.Directory)</_LocalizationKitCliDirectory>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <_LocalizationKitCliFile Include="$(_LocalizationKitCliDirectory)*.dll;$(_LocalizationKitCliDirectory)*.deps.json;$(_LocalizationKitCliDirectory)*.runtimeconfig.json" />
+      <TfmSpecificPackageFile Include="@(_LocalizationKitCliFile)" PackagePath="tools\cli\" />
+    </ItemGroup>
+
+    <!-- The key generator travels in the same package, under the path the compiler looks in for
+         analyzers, so one PackageReference brings validation and typed keys together. -->
+    <!-- TargetFramework has to be stated, not inherited: this target runs once per framework of the
+         package, and the generator has only the one. -->
+    <MSBuild Projects="..\LocalizationKit.Generators\LocalizationKit.Generators.csproj"
+             Targets="GetTargetPath"
+             Properties="TargetFramework=netstandard2.0;Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" ItemName="_LocalizationKitGenerator" />
+    </MSBuild>
+
+    <ItemGroup>
+      <TfmSpecificPackageFile Include="@(_LocalizationKitGenerator)" PackagePath="analyzers\dotnet\cs\" />
+    </ItemGroup>
+
+    <Error Condition="'@(_LocalizationKitCliFile)' == ''"
+           Text="No CLI output was found in $(_LocalizationKitCliDirectory); the package would ship without its tool." />
+  </Target>
+
+</Project>

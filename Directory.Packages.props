@@ -1,0 +1,48 @@
+﻿<Project>
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.14" />
+  </ItemGroup>
+
+  <ItemGroup Label="Compatibility">
+    <PackageVersion Include="Microsoft.Extensions.Localization.Abstractions" Version="10.0.14" />
+    <!-- Test-only: proves the bridge replaces what AddLocalization() registers. -->
+    <PackageVersion Include="Microsoft.Extensions.Localization" Version="10.0.14" />
+  </ItemGroup>
+
+  <ItemGroup Label="Source generation">
+    <!-- The Roslyn version an analyzer compiles against is the oldest compiler it has to run in, not
+         the newest: 4.8 ships with the .NET 8 SDK and Visual Studio 2022 17.8. -->
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Resource formats">
+    <!-- YAML is not a format to parse by hand: a translation file only needs nested mappings of
+         strings, but telling that subset apart from the rest of YAML is the whole difficulty. The
+         low-level representation model is used, not the object mapper, so nothing reflects. -->
+    <PackageVersion Include="YamlDotNet" Version="18.1.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Messages">
+    <!-- Evaluated against CLDR behaviour before being taken: see OVERVIEW section 4. -->
+    <PackageVersion Include="Rh.MessageFormat" Version="1.2.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="WinUI">
+    <PackageVersion Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
+    <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2705" />
+  </ItemGroup>
+
+  <ItemGroup Label="Testing">
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+</Project>

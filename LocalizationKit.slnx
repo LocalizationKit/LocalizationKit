@@ -1,0 +1,37 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/LocalizationKit.Build/LocalizationKit.Build.csproj" />
+    <Project Path="src/LocalizationKit.AspNetCore/LocalizationKit.AspNetCore.csproj" />
+    <Project Path="src/LocalizationKit.Generators/LocalizationKit.Generators.csproj" />
+    <Project Path="src/LocalizationKit.Maui/LocalizationKit.Maui.csproj" />
+    <Project Path="src/LocalizationKit.Messages.Icu/LocalizationKit.Messages.Icu.csproj" />
+    <Project Path="src/LocalizationKit.Resources.Json/LocalizationKit.Resources.Json.csproj" />
+    <Project Path="src/LocalizationKit.Resources.Resw/LocalizationKit.Resources.Resw.csproj" />
+    <Project Path="src/LocalizationKit.Resources.Yaml/LocalizationKit.Resources.Yaml.csproj" />
+    <Project Path="src/LocalizationKit.StringLocalizer/LocalizationKit.StringLocalizer.csproj" />
+    <Project Path="src/LocalizationKit.Tooling/LocalizationKit.Tooling.csproj" />
+    <Project Path="src/LocalizationKit.WinUI/LocalizationKit.WinUI.csproj" />
+    <Project Path="src/LocalizationKit.Wpf/LocalizationKit.Wpf.csproj" />
+    <Project Path="src/LocalizationKit/LocalizationKit.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/LocalizationKit.AspNetCore.Tests/LocalizationKit.AspNetCore.Tests.csproj" />
+    <Project Path="tests/LocalizationKit.Generators.Tests/LocalizationKit.Generators.Tests.csproj" />
+    <Project Path="tests/LocalizationKit.Maui.Tests/LocalizationKit.Maui.Tests.csproj" />
+    <Project Path="tests/LocalizationKit.Messages.Icu.Tests/LocalizationKit.Messages.Icu.Tests.csproj" />
+    <Project Path="tests/LocalizationKit.Resources.Json.Tests/LocalizationKit.Resources.Json.Tests.csproj" />
+    <Project Path="tests/LocalizationKit.Resources.Resw.Tests/LocalizationKit.Resources.Resw.Tests.csproj" />
+    <Project Path="tests/LocalizationKit.Resources.Yaml.Tests/LocalizationKit.Resources.Yaml.Tests.csproj" />
+    <Project Path="tests/LocalizationKit.StringLocalizer.Tests/LocalizationKit.StringLocalizer.Tests.csproj" />
+    <Project Path="tests/LocalizationKit.Tests/LocalizationKit.Tests.csproj" />
+    <Project Path="tests/LocalizationKit.Tooling.Tests/LocalizationKit.Tooling.Tests.csproj" />
+    <Project Path="tests/LocalizationKit.Wpf.Tests/LocalizationKit.Wpf.Tests.csproj" />
+  </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/Console/LocalizationKit.Sample.Console.csproj" />
+    <Project Path="samples/Web/LocalizationKit.Sample.Web.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/LocalizationKit.Cli/LocalizationKit.Cli.csproj" />
+  </Folder>
+</Solution>

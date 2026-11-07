@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <PackageId>LocalizationKit.Tooling</PackageId>
+    <Description>Keeps a WinUI project's .resw files, project items and local Visual Studio state in sync: culture scaffolding, .csproj.user PRIResource entries, Resource Explorer columns, and resource validation.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LocalizationKit.Resources.Resw\LocalizationKit.Resources.Resw.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,4 @@
+{
+  "Cart.Items": "{count, plural, one {# item} other {# items}}",
+  "Welcome": "Welcome, {name}!"
+}

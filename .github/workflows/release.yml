@@ -1,0 +1,115 @@
+name: Release
+
+# Pushing a tag is the whole release: v0.1.0 publishes 0.1.0, v0.2.0-preview.1 publishes a prerelease.
+# Nothing publishes from a branch, so nothing publishes by accident.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to pack, for a dry run without a tag"
+        required: true
+        default: "0.1.0-local"
+
+jobs:
+  publish:
+    runs-on: windows-latest
+
+    permissions:
+      contents: read
+      # Lets this job ask GitHub for the signed token that nuget.org trades for a publishing key.
+      # Without it the login step fails with a token request error and nothing else explains why.
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # SourceLink puts the commit in the symbols, which needs the real history rather than a
+          # shallow clone.
+          fetch-depth: 0
+
+      # main is the published branch, and a release is a tag on it. A tag can be pushed from any
+      # branch, though, and a version published by accident from somewhere else can be unlisted but
+      # never replaced. So the tag has to be on main before anything else runs. Nothing to
+      # configure: the full clone above is what makes this answerable.
+      - name: Check the tag is on main
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          git fetch --no-tags origin main:refs/remotes/origin/main
+          git merge-base --is-ancestor $env:GITHUB_SHA origin/main
+          if ($LASTEXITCODE -ne 0) {
+            throw "${{ github.ref_name }} points at a commit that is not on main. Releases are tags on main: land the work on main first, then tag it."
+          }
+          Write-Host "${{ github.ref_name }} is on main."
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Install the workloads the integrations need
+        run: dotnet workload restore LocalizationKit.slnx
+
+      - name: Read the version from the tag
+        id: version
+        shell: pwsh
+        run: |
+          $version = if ($env:GITHUB_REF -like "refs/tags/v*") {
+            $env:GITHUB_REF -replace "^refs/tags/v", ""
+          } else {
+            "${{ github.event.inputs.version }}"
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "Packing $version"
+
+      - name: Build
+        run: dotnet build LocalizationKit.slnx --configuration Release -p:Version=${{ steps.version.outputs.version }}
+
+      - name: Test
+        run: dotnet test LocalizationKit.slnx --configuration Release --no-build
+
+      - name: Pack
+        run: dotnet pack LocalizationKit.slnx --configuration Release --no-build --output artifacts -p:Version=${{ steps.version.outputs.version }}
+
+      - name: Upload the packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: packages-${{ steps.version.outputs.version }}
+          path: |
+            artifacts/*.nupkg
+            artifacts/*.snupkg
+
+      # Only a tag publishes. A manual run packs and stops, which is how to check a release before
+      # making one.
+
+      # Trusted Publishing, so no long-lived key is stored anywhere. GitHub signs a token saying
+      # which repository, workflow and ref this is; nuget.org checks it against the policy
+      # configured there and hands back a key that lives for an hour. The one thing in the
+      # repository's secrets is the nuget.org profile name, which is not a secret at all — it is a
+      # secret only so it is in one place and not in this file.
+      - name: Check the publisher is configured
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          NUGET_USER: ${{ secrets.NUGET_USER }}
+        run: |
+          if ("$env:NUGET_USER" -eq "") {
+            throw "NUGET_USER is not set in the repository's secrets. It is the nuget.org profile name that owns the Trusted Publishing policy — the profile name, not an email address."
+          }
+
+      # The key expires in an hour, so it is fetched here rather than at the top of the job.
+      - name: Sign in to NuGet
+        id: login
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Publish to NuGet
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          dotnet nuget push "artifacts/*.nupkg" --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate

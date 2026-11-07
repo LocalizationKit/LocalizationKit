@@ -1,0 +1,118 @@
+<Project>
+
+  <PropertyGroup>
+    <LocalizationKitCliAssembly Condition="'$(LocalizationKitCliAssembly)' == '' AND '$(LocalizationKitToolDirectory)' != ''">$(LocalizationKitToolDirectory)LocalizationKit.Cli.dll</LocalizationKitCliAssembly>
+
+    <!-- The SDK sets DOTNET_HOST_PATH to the dotnet that is running the build, which is the one whose
+         runtime the tool should use. Falling back to the PATH keeps this working under an MSBuild
+         that does not set it. -->
+    <_LocalizationKitHost Condition="'$(DOTNET_HOST_PATH)' != ''">$(DOTNET_HOST_PATH)</_LocalizationKitHost>
+    <_LocalizationKitHost Condition="'$(_LocalizationKitHost)' == ''">dotnet</_LocalizationKitHost>
+
+    <_LocalizationKitCommonArguments>--project "$(MSBuildProjectFullPath)" --resources-path "$(LocalizationKitResourcesPath)" --file-name "$(LocalizationKitResourceFileName)"</_LocalizationKitCommonArguments>
+    <_LocalizationKitWarningsAsErrors Condition="'$(LocalizationKitValidateWarningsAsErrors)' == 'true'">--warnings-as-errors</_LocalizationKitWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- The inputs for incremental validation: the resource files, and the project itself, because it
+       owns LocalizationKitCultures and DefaultLanguage. -->
+  <ItemGroup>
+    <LocalizationKitValidateInput Include="$(MSBuildProjectFullPath)" />
+    <LocalizationKitValidateInput Include="$(LocalizationKitResourcesPath)\**\$(LocalizationKitResourceFileName)" />
+  </ItemGroup>
+
+  <!--
+    A design-time build must not shell out to a tool, and the IDE asks for plenty of those while
+    someone is typing. DesignTimeBuild is the signal: the project system passes it as a global
+    property, so it is set everywhere in the build.
+
+    BuildingProject, the signal the same check is usually written with, is measurably wrong here. In an
+    SDK project built by `dotnet build` it is still false at BeforeBuild and only becomes true later
+    in the build, so testing it would have disabled this target in every real build and taken a while
+    to notice, because a validator that finds nothing looks exactly like one that never ran.
+  -->
+  <!--
+    What the key generator reads. The default culture's resource file is the list of keys the project
+    has: a translation is allowed to be behind, and a key that exists only in a translation is a
+    finding for the validator rather than a constant to offer.
+
+    DefaultLanguage is the Windows App SDK's own property, so a WinUI project already has it set; a
+    project that has not can set LocalizationKitDefaultCulture instead.
+  -->
+  <PropertyGroup>
+    <LocalizationKitDefaultCulture Condition="'$(LocalizationKitDefaultCulture)' == ''">$(DefaultLanguage)</LocalizationKitDefaultCulture>
+    <_LocalizationKitKeysFile>$(LocalizationKitResourcesPath)\$(LocalizationKitDefaultCulture)\$(LocalizationKitResourceFileName)</_LocalizationKitKeysFile>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(LocalizationKitGenerateKeys)' == 'true' AND '$(LocalizationKitDefaultCulture)' != '' AND Exists('$(_LocalizationKitKeysFile)')">
+    <AdditionalFiles Include="$(_LocalizationKitKeysFile)" LocalizationKitKeys="true" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(LocalizationKitGenerateKeys)' == 'true'">
+    <!-- How the generator sees the metadata above and the options below. -->
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="LocalizationKitKeys" />
+    <CompilerVisibleProperty Include="LocalizationKitGenerateKeys" />
+    <CompilerVisibleProperty Include="LocalizationKitKeysClass" />
+    <CompilerVisibleProperty Include="LocalizationKitKeysNamespace" />
+    <CompilerVisibleProperty Include="LocalizationKitKeysAccessibility" />
+    <CompilerVisibleProperty Include="RootNamespace" />
+  </ItemGroup>
+
+  <Target Name="LocalizationKitValidate"
+          BeforeTargets="BeforeBuild"
+          Condition="'$(LocalizationKitValidate)' == 'true' AND '$(DesignTimeBuild)' != 'true'"
+          Inputs="@(LocalizationKitValidateInput)"
+          Outputs="$(IntermediateOutputPath)localizationkit.validate.stamp">
+
+    <Error Condition="'$(LocalizationKitCliAssembly)' == '' OR !Exists('$(LocalizationKitCliAssembly)')"
+           Code="LK000"
+           Text="LocalizationKit cannot find its command line tool. Set LocalizationKitCliAssembly to the path of LocalizationKit.Cli.dll, or set LocalizationKitValidate to false." />
+
+    <!-- IntermediateOutputPath is expanded here rather than into a property at import time, because
+         a project that imports these targets from source imports them before the SDK has set it; a
+         target's own attributes are expanded when it runs, by which point it is set either way.
+         Getting this wrong puts the stamp in the project root and nothing complains. -->
+    <MakeDir Directories="$(IntermediateOutputPath)" />
+
+    <!-- The findings arrive as MSBuild-canonical lines on stdout, so Exec re-logs each one as an error
+         or a warning against the right file and line. The exit code is ignored on purpose: failing the
+         Exec would only add MSB3073 on top of diagnostics that already say more. It is read back to
+         decide whether to stamp, so a project whose resources are still broken gets validated again
+         next build instead of being skipped as up to date. -->
+    <Exec Command="&quot;$(_LocalizationKitHost)&quot; &quot;$(LocalizationKitCliAssembly)&quot; validate $(_LocalizationKitCommonArguments) --format msbuild $(_LocalizationKitWarningsAsErrors)"
+          WorkingDirectory="$(MSBuildProjectDirectory)"
+          StandardOutputImportance="high"
+          IgnoreExitCode="true">
+      <Output TaskParameter="ExitCode" PropertyName="_LocalizationKitValidateExitCode" />
+    </Exec>
+
+    <Error Condition="'$(_LocalizationKitValidateExitCode)' != '0' AND '$(_LocalizationKitValidateExitCode)' != '1'"
+           Code="LK000"
+           Text="localizationkit validate could not run (exit code $(_LocalizationKitValidateExitCode))." />
+
+    <Touch Files="$(IntermediateOutputPath)localizationkit.validate.stamp"
+           AlwaysCreate="true"
+           Condition="'$(_LocalizationKitValidateExitCode)' == '0'" />
+  </Target>
+
+  <!-- Developer-local state: the .csproj.user PRIResource entries and the Resource Explorer columns
+       that neither a clone nor a new culture brings with it. Deliberately not incremental, because
+       Visual Studio rewrites both files behind the build; the tool is idempotent and writes nothing
+       when they already agree. It never fails a build: a gitignored convenience is not worth stopping
+       for. -->
+  <Target Name="LocalizationKitSyncIde"
+          BeforeTargets="BeforeBuild"
+          Condition="'$(LocalizationKitSyncIde)' == 'true' AND '$(Configuration)' == 'Debug' AND '$(DesignTimeBuild)' != 'true' AND Exists('$(LocalizationKitCliAssembly)')">
+
+    <Exec Command="&quot;$(_LocalizationKitHost)&quot; &quot;$(LocalizationKitCliAssembly)&quot; sync-ide $(_LocalizationKitCommonArguments)"
+          WorkingDirectory="$(MSBuildProjectDirectory)"
+          StandardOutputImportance="normal"
+          IgnoreExitCode="true">
+      <Output TaskParameter="ExitCode" PropertyName="_LocalizationKitSyncExitCode" />
+    </Exec>
+
+    <Warning Condition="'$(_LocalizationKitSyncExitCode)' != '0'"
+             Code="LK900"
+             Text="localizationkit sync-ide exited with code $(_LocalizationKitSyncExitCode); the local Visual Studio files may not list every culture." />
+  </Target>
+
+</Project>

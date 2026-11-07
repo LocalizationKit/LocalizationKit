@@ -1,0 +1,33 @@
+## Build output
+[Bb]in/
+[Oo]bj/
+artifacts/
+*.binlog
+
+## Visual Studio / Rider / VS Code local state
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.DotSettings.user
+
+## NuGet
+*.nupkg
+*.snupkg
+.nuget/
+
+## Test results
+[Tt]est[Rr]esult*/
+coverage*.json
+coverage*.xml
+coverage*.info
+
+## OS
+Thumbs.db
+.DS_Store
+
+## Visual Studio extension build output
+tools/LocalizationKit.VsExtension/bin/
+tools/LocalizationKit.VsExtension/obj/

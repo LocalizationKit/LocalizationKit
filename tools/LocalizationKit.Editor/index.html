@@ -1,0 +1,1746 @@
+<title>LocalizationKit Resw Editor</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+
+<style>
+  /* Layout: a fixed working pane — key list beside one key's editor — that stacks at phone width.
+     Palette is cool slate with a single teal action accent; status colours are separate from it. */
+  :root {
+    --bg: #f4f6f7;
+    --surface: #ffffff;
+    --surface-sunken: #eceff1;
+    --line: #d4dbdf;
+    --fg: #16211f;
+    --fg-dim: #5c6b6c;
+    --accent: #0f6f6a;
+    --accent-soft: #d8ebe9;
+    --ok: #1d7a4c;
+    --warn: #8a5a00;
+    --warn-soft: #fbf0d8;
+    --bad: #a32020;
+    --bad-soft: #fae3e3;
+    --font-body: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+    --radius: 6px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101817;
+      --surface: #182322;
+      --surface-sunken: #0c1413;
+      --line: #2c3a39;
+      --fg: #e6eceb;
+      --fg-dim: #94a5a4;
+      --accent: #4fd1c7;
+      --accent-soft: #15302e;
+      --ok: #5fd39a;
+      --warn: #e0b35c;
+      --warn-soft: #2e2512;
+      --bad: #f28b82;
+      --bad-soft: #35191a;
+      color-scheme: dark;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #101817;
+    --surface: #182322;
+    --surface-sunken: #0c1413;
+    --line: #2c3a39;
+    --fg: #e6eceb;
+    --fg-dim: #94a5a4;
+    --accent: #4fd1c7;
+    --accent-soft: #15302e;
+    --ok: #5fd39a;
+    --warn: #e0b35c;
+    --warn-soft: #2e2512;
+    --bad: #f28b82;
+    --bad-soft: #35191a;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { height: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.45;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding-block: 10px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .brand {
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-right: 4px;
+  }
+
+  .brand span { color: var(--fg-dim); font-weight: 400; }
+
+  button {
+    font: inherit;
+    color: inherit;
+    background: var(--surface-sunken);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 5px 11px;
+    cursor: pointer;
+  }
+
+  button:hover { border-color: var(--accent); }
+
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 500;
+  }
+
+  :root[data-theme="dark"] button.primary,
+  :root:not([data-theme="light"]) button.primary { color: #06201e; }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) button.primary { color: #fff; }
+  }
+
+  button[disabled] { opacity: 0.45; cursor: default; border-color: var(--line); }
+
+  .file {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 3px 8px;
+    background: var(--surface-sunken);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+  }
+
+  .file b { font-weight: 600; }
+  .file i { color: var(--fg-dim); font-style: normal; }
+
+  .spacer { flex: 1 1 auto; }
+
+  .io {
+    font-size: 12px;
+    color: var(--fg-dim);
+  }
+
+  main {
+    flex: 1 1 auto;
+    display: grid;
+    grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  @media (max-width: 860px) {
+    main { grid-template-columns: minmax(0, 1fr); }
+    .keys { max-height: 40vh; }
+  }
+
+  .keys {
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--surface);
+  }
+
+  .filters {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    padding-left: max(10px, env(safe-area-inset-left, 0px));
+    border-bottom: 1px solid var(--line);
+  }
+
+  input[type="search"], input[type="text"], textarea, select {
+    font: inherit;
+    color: inherit;
+    background: var(--surface-sunken);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 6px 8px;
+    width: 100%;
+  }
+
+  textarea { font-family: var(--font-mono); font-size: 13px; resize: vertical; }
+
+  input:focus-visible, textarea:focus-visible, select:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+  }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .chip {
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--fg-dim);
+    cursor: pointer;
+  }
+
+  .chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--fg); }
+
+  .list { overflow-y: auto; flex: 1 1 auto; }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    padding: 8px 10px;
+    padding-left: max(10px, env(safe-area-inset-left, 0px));
+  }
+
+  .row:hover { background: var(--surface-sunken); }
+
+  .row[aria-current="true"] {
+    background: var(--accent-soft);
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+
+  .row .name {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    overflow-wrap: anywhere;
+  }
+
+  .row .preview {
+    grid-column: 1 / -1;
+    font-size: 12px;
+    color: var(--fg-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+  }
+
+  .dot.ok { background: var(--ok); }
+  .dot.warn { background: var(--warn); }
+  .dot.bad { background: var(--bad); }
+
+  .editor {
+    overflow-y: auto;
+    padding-block: 16px 28px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    min-width: 0;
+  }
+
+  .key-title {
+    font-family: var(--font-mono);
+    font-size: 15px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+    margin: 0 0 2px;
+  }
+
+  .sub { color: var(--fg-dim); font-size: 12px; margin: 0 0 16px; }
+
+  section { margin-bottom: 18px; }
+
+  h2 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--fg-dim);
+    margin: 0 0 6px;
+    font-weight: 600;
+  }
+
+  .source {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    background: var(--surface-sunken);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--line);
+    border-radius: var(--radius);
+    padding: 8px 10px;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+
+  .mode { display: flex; gap: 6px; margin-bottom: 8px; }
+
+  .branches { display: flex; flex-direction: column; gap: 8px; }
+
+  .branch {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: start;
+  }
+
+  @media (max-width: 560px) {
+    .branch { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  .cat {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding-top: 7px;
+    color: var(--fg);
+  }
+
+  .cat small { display: block; color: var(--fg-dim); font-size: 11px; }
+
+  .preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .preview-table th, .preview-table td {
+    text-align: left;
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+
+  .preview-table th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--fg-dim); font-weight: 600; }
+  .preview-table td.n { font-family: var(--font-mono); font-variant-numeric: tabular-nums; width: 4.5em; }
+  .preview-table td.c { font-family: var(--font-mono); font-size: 12px; color: var(--fg-dim); width: 6em; }
+
+  .finding {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+
+  .finding code { font-family: var(--font-mono); font-size: 12px; font-weight: 600; }
+  .finding.bad { background: var(--bad-soft); border-color: var(--bad); }
+  .finding.warn { background: var(--warn-soft); border-color: var(--warn); }
+
+  .empty { color: var(--fg-dim); font-size: 13px; }
+
+  footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+    padding-block: 8px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    border-top: 1px solid var(--line);
+    background: var(--surface);
+    font-size: 12px;
+    color: var(--fg-dim);
+  }
+
+  footer b { color: var(--fg); font-variant-numeric: tabular-nums; }
+
+  .drop {
+    position: fixed;
+    inset: 0;
+    display: none;
+    place-items: center;
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+    font-size: 16px;
+    font-weight: 600;
+    z-index: 20;
+  }
+
+  body.dragging .drop { display: grid; }
+
+  dialog {
+    max-width: min(680px, 92vw);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--fg);
+    padding: 16px;
+  }
+
+  dialog::backdrop { background: rgb(0 0 0 / 0.45); }
+
+  dialog textarea { height: 40vh; }
+
+  .hint { font-size: 12px; color: var(--fg-dim); margin: 6px 0 10px; }
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+
+<div class="bar">
+  <div class="brand">LocalizationKit Resw Editor <span>· ICU-aware resource editing</span></div>
+  <div class="file" id="source-file"><b>en-US</b> <i>sample</i></div>
+  <div class="file" id="target-file"><b>it-IT</b> <i>sample</i></div>
+  <button id="open">Open files…</button>
+  <button class="primary" id="save" disabled>Save target</button>
+  <div class="spacer"></div>
+  <div class="io" id="io-mode">Reading sample data</div>
+</div>
+
+<main>
+  <div class="keys">
+    <div class="filters">
+      <input type="search" id="filter" placeholder="Filter keys or text" aria-label="Filter keys or text">
+      <div class="chips" role="group" aria-label="Show only">
+        <button class="chip" id="chip-problems" aria-pressed="false">Problems</button>
+        <button class="chip" id="chip-missing" aria-pressed="false">Missing</button>
+        <button class="chip" id="chip-plural" aria-pressed="false">Plurals</button>
+      </div>
+    </div>
+    <div class="list" id="list" role="listbox" aria-label="Resource keys"></div>
+  </div>
+
+  <div class="editor" id="editor"></div>
+</main>
+
+<footer>
+  <div><b id="stat-keys">0</b> keys</div>
+  <div><b id="stat-translated">0</b> translated</div>
+  <div><b id="stat-problems">0</b> problems</div>
+  <div><b id="stat-categories">—</b></div>
+  <div class="spacer"></div>
+  <div id="stat-dirty"></div>
+</footer>
+
+<div class="drop">Drop .resw files</div>
+
+<dialog id="xml-dialog">
+  <h2 style="font-size:13px">The target file</h2>
+  <p class="hint" id="xml-hint"></p>
+  <textarea id="xml-text" readonly spellcheck="false"></textarea>
+  <div style="display:flex;gap:8px;margin-top:10px">
+    <button class="primary" id="xml-copy">Copy</button>
+    <button id="xml-close">Close</button>
+  </div>
+</dialog>
+
+<script>
+  "use strict";
+
+  // ---------------------------------------------------------------- the .resw file, read and written
+  //
+  // Round-tripping matters more than tidiness here: these files live in git next to a project that
+  // Visual Studio also writes, and a save that reformats the whole file turns a one-word translation
+  // into a 300-line diff. So the header, the footer, the indentation, the line endings and the byte
+  // order mark are all taken from the file that was opened and put back exactly as they were, and an
+  // entry this editor does not understand — an image, a byte array — is kept as the raw text it was.
+
+  const ReswFile = {
+    parse(text) {
+      const bom = text.charCodeAt(0) === 0xfeff;
+      const body = bom ? text.slice(1) : text;
+      const eol = body.includes("\r\n") ? "\r\n" : "\n";
+
+      const rootClose = body.lastIndexOf("</root>");
+      if (rootClose < 0) {
+        throw new Error("That does not look like a .resw file: there is no <root> element.");
+      }
+
+      // The file is read as a run of chunks — comments, <data> elements, the whitespace between them
+      // — and written back the same way. Every .resw opens with a long comment that documents the
+      // format with examples, and those examples include <data name="Name1"> lines: look for data
+      // elements with a regular expression and the first thing found is inside a comment. Keeping
+      // comments as chunks also means one written between two entries survives being saved.
+      const chunks = [];
+      const entries = [];
+      let index = 0;
+      let header = null;
+      let dataIndent = "  ";
+      let childIndent = "    ";
+
+      while (index < rootClose) {
+        if (body.startsWith("<!--", index)) {
+          const end = body.indexOf("-->", index);
+          const stop = end < 0 ? rootClose : Math.min(end + 3, rootClose);
+          chunks.push({ raw: body.slice(index, stop) });
+          index = stop;
+          continue;
+        }
+
+        const dataAt = findData(body, index, rootClose);
+
+        if (dataAt < 0) {
+          chunks.push({ raw: body.slice(index, rootClose) });
+          break;
+        }
+
+        // Everything up to this element — the declaration, the schema, the comment, the indentation
+        // — belongs to whoever wrote it.
+        const lineStart = body.lastIndexOf("\n", dataAt) + 1;
+        const indentOnly = body.slice(lineStart, dataAt).trim().length === 0;
+        const prefixEnd = indentOnly ? lineStart : dataAt;
+
+        if (prefixEnd > index) {
+          chunks.push({ raw: body.slice(index, prefixEnd) });
+        }
+
+        const close = body.indexOf("</data>", dataAt);
+        const selfClosing = /^<data\b[^>]*\/>/.exec(body.slice(dataAt));
+        const end = selfClosing
+          ? dataAt + selfClosing[0].length
+          : close < 0 ? rootClose : close + "</data>".length;
+
+        let stop = end;
+        if (body[stop] === "\r") { stop += 1; }
+        if (body[stop] === "\n") { stop += 1; }
+
+        const raw = body.slice(prefixEnd, stop);
+
+        if (header === null) {
+          header = chunks.map((chunk) => chunk.raw).join("");
+          chunks.length = 0;
+          dataIndent = (/^([ \t]*)/.exec(body.slice(lineStart, dataAt)) || [, "  "])[1];
+          childIndent = (/\r?\n([ \t]*)</.exec(raw) || [, dataIndent + "  "])[1];
+        }
+
+        const entry = readEntry(raw);
+        chunks.push({ entry });
+        entries.push(entry);
+        index = stop;
+      }
+
+      if (header === null) {
+        throw new Error("That does not look like a .resw file: it has no <data> elements.");
+      }
+
+      return { bom, eol, header, footer: body.slice(rootClose), dataIndent, childIndent, chunks, entries };
+    },
+
+    serialize(file) {
+      const parts = [file.bom ? "﻿" : "", file.header];
+
+      for (const chunk of file.chunks) {
+        if (chunk.raw !== undefined) {
+          parts.push(chunk.raw);
+          continue;
+        }
+
+        const entry = chunk.entry;
+
+        if (!entry.translatable) {
+          parts.push(entry.raw);
+          continue;
+        }
+
+        parts.push(
+          file.dataIndent, '<data name="', encodeAttribute(entry.name), '" xml:space="preserve">', file.eol,
+          file.childIndent, "<value>", encodeText(entry.value), "</value>", file.eol);
+
+        if (entry.comment) {
+          parts.push(file.childIndent, "<comment>", encodeText(entry.comment), "</comment>", file.eol);
+        }
+
+        parts.push(file.dataIndent, "</data>", file.eol);
+      }
+
+      return parts.join("") + file.footer;
+    },
+
+    /// Puts a new entry where the last one is, so an added key does not land after the file's
+    /// closing whitespace.
+    add(file, entry) {
+      let at = file.chunks.length;
+      for (let i = file.chunks.length - 1; i >= 0; i--) {
+        if (file.chunks[i].entry) { at = i + 1; break; }
+      }
+
+      file.chunks.splice(at, 0, { entry });
+      file.entries.push(entry);
+    },
+  };
+
+  function findData(body, from, limit) {
+    let index = from;
+
+    while (index < limit) {
+      const next = body.indexOf("<data", index);
+      if (next < 0 || next >= limit) { return -1; }
+
+      const comment = body.lastIndexOf("<!--", next);
+      const closed = body.lastIndexOf("-->", next);
+
+      // Inside a comment when the nearest <!-- before it has no --> between them.
+      if (comment >= 0 && comment > closed) {
+        const end = body.indexOf("-->", next);
+        index = end < 0 ? limit : end + 3;
+        continue;
+      }
+
+      return next;
+    }
+
+    return -1;
+  }
+
+  function readEntry(raw) {
+    const name = decode((/<data\b[^>]*\bname="([^"]*)"/.exec(raw) || [, ""])[1]);
+    const translatable = Boolean(name) && !/<data\b[^>]*\b(type|mimetype)=/.test(raw);
+
+    if (!translatable) {
+      return { name, raw, translatable: false, value: "", comment: "" };
+    }
+
+    const value = decode((/<value>([\s\S]*?)<\/value>/.exec(raw) || [, ""])[1]);
+    const comment = /<comment>([\s\S]*?)<\/comment>/.exec(raw);
+
+    return {
+      name,
+      value,
+      comment: comment ? decode(comment[1]) : "",
+      translatable: true,
+      raw,
+    };
+  }
+
+  // Text content and an attribute value are escaped differently, and the difference is visible in a
+  // diff: a quotation mark inside <value> stays a quotation mark, and escaping it there rewrites
+  // every line that holds link markup.
+  function encodeText(text) {
+    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function encodeAttribute(text) {
+    return encodeText(text).replace(/"/g, "&quot;");
+  }
+
+  function encode(text) {
+    return encodeText(text);
+  }
+
+  function decode(text) {
+    const parsed = new DOMParser().parseFromString("<t>" + text + "</t>", "text/xml");
+    return parsed.documentElement.textContent ?? "";
+  }
+
+  // --------------------------------------------------------------------------------- ICU messages
+  //
+  // Only as much of the grammar as this editor needs: where the arguments are, and whether the
+  // message is a plural it can offer branch-by-branch. The rules match the kit's own validator, so a
+  // message this page calls good is one the build calls good.
+
+  const CATEGORIES = ["zero", "one", "two", "few", "many", "other"];
+  const TYPES = ["plural", "selectordinal", "select", "number", "date", "time", "spellout", "ordinal", "duration"];
+
+  function scanMessage(text) {
+    // Recursive, because a brace means two different things. In {count, plural, one {# item}} the
+    // first brace opens an argument and the second opens a branch body, and a scanner that counts
+    // braces without knowing which is which reports "one" and "item" as arguments — then the parity
+    // check against the other language compares nonsense. This mirrors the kit's own validator.
+    const state = { text, index: 0, args: [], error: null };
+
+    readBody(state, false);
+
+    if (state.index < text.length && !state.error) {
+      state.error = "There is a '}' with no '{' before it.";
+    }
+
+    return { args: state.args, error: state.error };
+  }
+
+  function fail(state, message) {
+    state.error = state.error || message;
+  }
+
+  function skipSpace(state) {
+    while (state.index < state.text.length && /\s/.test(state.text[state.index])) {
+      state.index += 1;
+    }
+  }
+
+  function readBody(state, nested) {
+    while (state.index < state.text.length) {
+      const char = state.text[state.index];
+
+      if (char === "'") {
+        // A doubled apostrophe is a literal one; an apostrophe before a syntax character quotes
+        // until the next apostrophe; anywhere else it is just an apostrophe, which is what keeps
+        // l'articolo intact.
+        if (state.text[state.index + 1] === "'") { state.index += 2; continue; }
+        if ("{}#|".includes(state.text[state.index + 1] ?? "")) {
+          const close = state.text.indexOf("'", state.index + 1);
+          state.index = close < 0 ? state.text.length : close + 1;
+          continue;
+        }
+        state.index += 1;
+        continue;
+      }
+
+      if (char === "}") {
+        if (nested) { return; }
+        return;  // the caller reports the stray brace
+      }
+
+      if (char === "{") {
+        readArgument(state);
+        continue;
+      }
+
+      state.index += 1;
+    }
+
+    if (nested) {
+      fail(state, "An argument is not closed with '}'.");
+    }
+  }
+
+  function readArgument(state) {
+    state.index += 1;  // past '{'
+    skipSpace(state);
+
+    const start = state.index;
+    while (state.index < state.text.length && !",}{ \t\r\n".includes(state.text[state.index])) {
+      state.index += 1;
+    }
+
+    const name = state.text.slice(start, state.index);
+    if (!name) {
+      fail(state, "An argument has no name.");
+    } else if (!state.args.includes(name)) {
+      state.args.push(name);
+    }
+
+    skipSpace(state);
+
+    if (state.text[state.index] === "}") {
+      state.index += 1;
+      return;
+    }
+
+    if (state.text[state.index] !== ",") {
+      fail(state, `The argument '${name}' is not closed with '}'.`);
+      return;
+    }
+
+    state.index += 1;
+    skipSpace(state);
+
+    const typeStart = state.index;
+    while (state.index < state.text.length && /[a-zA-Z]/.test(state.text[state.index])) {
+      state.index += 1;
+    }
+
+    const type = state.text.slice(typeStart, state.index);
+
+    if (!TYPES.includes(type)) {
+      fail(state, `'${type}' is not an argument type. Use one of ${TYPES.join(", ")}.`);
+      return;
+    }
+
+    skipSpace(state);
+
+    if (type === "plural" || type === "selectordinal" || type === "select") {
+      if (state.text[state.index] !== ",") {
+        fail(state, `A ${type} needs its branches, as in {${name}, ${type}, other {…}}.`);
+        return;
+      }
+
+      state.index += 1;
+      readBranches(state, name, type);
+      return;
+    }
+
+    // A style argument — {n, number, ::percent} — holds no further messages, so it is skipped to its
+    // closing brace.
+    let depth = 1;
+    while (state.index < state.text.length && depth > 0) {
+      const char = state.text[state.index];
+      if (char === "{") { depth += 1; }
+      if (char === "}") { depth -= 1; }
+      state.index += 1;
+    }
+
+    if (depth > 0) {
+      fail(state, `The argument '${name}' is not closed with '}'.`);
+    }
+  }
+
+  function readBranches(state, name, type) {
+    const seen = [];
+    let sawOther = false;
+
+    for (;;) {
+      skipSpace(state);
+
+      if (state.index >= state.text.length) {
+        fail(state, `The ${type} '${name}' is not closed with '}'.`);
+        return;
+      }
+
+      if (state.text[state.index] === "}") {
+        state.index += 1;
+        break;
+      }
+
+      const offset = /^offset:\s*-?\d+/.exec(state.text.slice(state.index));
+      if (offset && type !== "select") {
+        state.index += offset[0].length;
+        continue;
+      }
+
+      const start = state.index;
+      if (state.text[state.index] === "=") {
+        state.index += 1;
+        while (state.index < state.text.length && /[-\d]/.test(state.text[state.index])) {
+          state.index += 1;
+        }
+      } else {
+        while (state.index < state.text.length && /[a-zA-Z_]/.test(state.text[state.index])) {
+          state.index += 1;
+        }
+      }
+
+      const keyword = state.text.slice(start, state.index);
+
+      if (!keyword) {
+        fail(state, `A branch of the ${type} '${name}' has no category.`);
+        return;
+      }
+
+      if (type !== "select" && !keyword.startsWith("=") && !CATEGORIES.includes(keyword)) {
+        fail(
+          state,
+          `'${keyword}' is not a plural category. Use one of ${CATEGORIES.join(", ")}, or an exact match such as =0.`);
+        return;
+      }
+
+      if (seen.includes(keyword)) {
+        fail(state, `The ${type} '${name}' has two '${keyword}' branches.`);
+        return;
+      }
+
+      seen.push(keyword);
+      sawOther = sawOther || keyword === "other";
+
+      skipSpace(state);
+
+      if (state.text[state.index] !== "{") {
+        fail(state, `The branch '${keyword}' of '${name}' has no body.`);
+        return;
+      }
+
+      state.index += 1;
+      readBody(state, true);
+
+      if (state.text[state.index] !== "}") {
+        fail(state, `The branch '${keyword}' of '${name}' is not closed with '}'.`);
+        return;
+      }
+
+      state.index += 1;
+    }
+
+    if (!sawOther) {
+      fail(state, `The ${type} '${name}' has no 'other' branch, which is the one every value that matches nothing else uses.`);
+    }
+  }
+
+  function readPlural(text) {
+    // A message is editable branch by branch when the whole of it is one plural or selectordinal.
+    const head = /^\{\s*([^\s,{}]+)\s*,\s*(plural|selectordinal)\s*,\s*/.exec(text);
+    if (!head) {
+      return null;
+    }
+
+    let index = head[0].length;
+    let offset = null;
+
+    const offsetMatch = /^offset:\s*(-?\d+)\s*/.exec(text.slice(index));
+    if (offsetMatch) {
+      offset = Number(offsetMatch[1]);
+      index += offsetMatch[0].length;
+    }
+
+    const branches = [];
+    let error = null;
+
+    while (index < text.length && text[index] !== "}") {
+      const label = /^\s*(=\s*-?\d+|[a-zA-Z]+)\s*\{/.exec(text.slice(index));
+      if (!label) {
+        error = "A plural branch needs a category and a body, as in one {# item}.";
+        break;
+      }
+
+      const category = label[1].replace(/\s+/g, "");
+      if (!category.startsWith("=") && !CATEGORIES.includes(category)) {
+        error = `'${category}' is not a plural category. Use one of ${CATEGORIES.join(", ")}, or an exact match such as =0.`;
+        break;
+      }
+
+      index += label[0].length;
+      const start = index;
+      let depth = 1;
+
+      while (index < text.length && depth > 0) {
+        const char = text[index];
+        if (char === "'" && "{}#|".includes(text[index + 1] ?? "")) {
+          const close = text.indexOf("'", index + 1);
+          index = close < 0 ? text.length : close + 1;
+          continue;
+        }
+        if (char === "{") { depth += 1; }
+        if (char === "}") { depth -= 1; }
+        index += 1;
+      }
+
+      if (depth > 0) {
+        error = "A plural branch is not closed with '}'.";
+        break;
+      }
+
+      branches.push({ category, body: text.slice(start, index - 1) });
+    }
+
+    // Anything after the closing brace means the plural is only part of the message, which this
+    // editor shows as text rather than pretending it can take it apart.
+    const tail = text.slice(index + 1);
+    if (!error && (index >= text.length || tail.trim().length > 0)) {
+      return null;
+    }
+
+    if (!error && !branches.some((branch) => branch.category === "other")) {
+      error = "A plural needs an 'other' branch: it is what every count that matches nothing else uses.";
+    }
+
+    return { argument: head[1], kind: head[2], offset, branches, error };
+  }
+
+  function writePlural(plural) {
+    const head = `{${plural.argument}, ${plural.kind}, ` + (plural.offset === null ? "" : `offset:${plural.offset} `);
+    const body = plural.branches
+      .filter((branch) => branch.category && branch.body !== null)
+      .map((branch) => `${branch.category} {${branch.body}}`)
+      .join(" ");
+
+    return head + body + "}";
+  }
+
+  function formatPlural(plural, locale, count) {
+    // Rendered the way the engine will: the branch for this count, with # standing for it.
+    const exact = plural.branches.find((branch) => branch.category === "=" + count);
+    const offsetCount = plural.offset === null ? count : count - plural.offset;
+    let branch = exact;
+
+    if (!branch) {
+      const kind = plural.kind === "selectordinal" ? "ordinal" : "cardinal";
+      let category = "other";
+      try {
+        category = new Intl.PluralRules(locale, { type: kind }).select(offsetCount);
+      } catch {
+        category = "other";
+      }
+      branch = plural.branches.find((item) => item.category === category)
+        || plural.branches.find((item) => item.category === "other");
+    }
+
+    if (!branch) {
+      return { category: "—", text: "" };
+    }
+
+    const shown = new Intl.NumberFormat(locale).format(offsetCount);
+    return {
+      category: branch.category,
+      text: branch.body.replace(/(^|[^'])#/g, (match, before) => before + shown),
+    };
+  }
+
+  function categoriesFor(locale, kind) {
+    try {
+      const type = kind === "selectordinal" ? "ordinal" : "cardinal";
+      const resolved = new Intl.PluralRules(locale, { type }).resolvedOptions().pluralCategories;
+      return CATEGORIES.filter((category) => resolved.includes(category));
+    } catch {
+      return ["one", "other"];
+    }
+  }
+
+  // ------------------------------------------------------------------------------------ validation
+  //
+  // The same findings the build reports, by the same codes, so that what this page says and what
+  // `localizationkit validate` says cannot disagree.
+
+  function validate(state) {
+    const findings = new Map();
+    const add = (name, code, severity, text) => {
+      const list = findings.get(name) || [];
+      list.push({ code, severity, text });
+      findings.set(name, list);
+    };
+
+    const target = new Map(state.target.entries.filter((e) => e.translatable).map((e) => [e.name.toLowerCase(), e]));
+    const names = new Set();
+
+    for (const entry of state.source.entries) {
+      if (!entry.translatable) { continue; }
+
+      names.add(entry.name.toLowerCase());
+      const source = scanMessage(entry.value);
+      if (source.error) {
+        add(entry.name, "LK009", "bad", `The ${state.source.culture} message is not valid: ${source.error}`);
+      }
+
+      const translation = target.get(entry.name.toLowerCase());
+
+      if (!translation) {
+        add(entry.name, "LK006", "warn", `Not in ${state.target.culture} yet.`);
+        continue;
+      }
+
+      if (!translation.value.trim()) {
+        add(entry.name, "LK008", "warn", "The translation is empty.");
+        continue;
+      }
+
+      const scan = scanMessage(translation.value);
+      if (scan.error) {
+        add(entry.name, "LK009", "bad", `Not a valid message: ${scan.error}`);
+        continue;
+      }
+
+      const missing = source.args.filter((arg) => !scan.args.includes(arg));
+      const extra = scan.args.filter((arg) => !source.args.includes(arg));
+
+      if (missing.length || extra.length) {
+        const parts = [];
+        if (missing.length) { parts.push(`does not use ${missing.map((a) => "{" + a + "}").join(", ")}`); }
+        if (extra.length) { parts.push(`uses ${extra.map((a) => "{" + a + "}").join(", ")}, which nothing supplies`); }
+        add(entry.name, "LK015", "bad", `The translation ${parts.join(" and ")}.`);
+      }
+    }
+
+    for (const entry of state.target.entries) {
+      if (entry.translatable && !names.has(entry.name.toLowerCase())) {
+        add(entry.name, "LK007", "warn", `Not in ${state.source.culture}, so nothing reads it.`);
+      }
+    }
+
+    // A key that is also the prefix of another cannot be compiled into a PRI, and the error comes
+    // out of MakePri with no hint about which two keys caused it.
+    const all = new Set([...names]);
+    for (const name of all) {
+      const parts = name.split(".");
+      for (let i = 1; i < parts.length; i++) {
+        const prefix = parts.slice(0, i).join(".");
+        if (all.has(prefix)) {
+          add(prefix, "LK012", "bad", `Also the prefix of '${name}', which MakePri cannot compile (PRI278).`);
+        }
+      }
+    }
+
+    return findings;
+  }
+
+  // ----------------------------------------------------------------------------------------- state
+
+  const SAMPLE_SOURCE = sample("en-US", [
+    ["Common.Save", "Save", ""],
+    ["Common.Cancel", "Cancel", ""],
+    ["Main.ContextMenu.DeleteForever",
+      "{count, plural, one {Delete forever} other {Delete # notes forever}}",
+      "One resource for every form: # is the count."],
+    ["Main.Selection.Summary", "{count, plural, one {# note selected} other {# notes selected}}", ""],
+    ["Main.Selection.TagAdded",
+      "{count, plural, =0 {{total, plural, one {It is already tagged “{tag}”} other {They are all tagged “{tag}” already}}} one {Added “{tag}” to # note} other {Added “{tag}” to # notes}}",
+      "{count} is how many the tag reached, {total} how many were asked."],
+    ["Settings.Language.Header", "Language", ""],
+    ["Login.CodeSent", "We sent a code to {email}.", ""],
+    ["Shell.EmptyTrash", "Empty trash…", ""],
+  ]);
+
+  const SAMPLE_TARGET = sample("it-IT", [
+    ["Common.Save", "Salva", ""],
+    ["Common.Cancel", "Annulla", ""],
+    ["Main.ContextMenu.DeleteForever",
+      "{count, plural, one {Elimina definitivamente} other {Elimina definitivamente # note}}",
+      "One resource for every form: # is the count."],
+    ["Main.Selection.Summary", "Note selezionate", ""],
+    ["Main.Selection.TagAdded",
+      "{count, plural, =0 {{total, plural, one {Ha già l’etichetta “{tag}”} other {Hanno già tutte l’etichetta “{tag}”}}} one {“{tag}” aggiunta a # nota} other {“{tag}” aggiunta a # note}}",
+      ""],
+    ["Settings.Language.Header", "Lingua", ""],
+    ["Shell.EmptyTrash", "Svuota cestino…", ""],
+  ]);
+
+  function sample(culture, rows) {
+    const indent = "  ";
+    const body = rows.map(([name, value, comment]) =>
+      `${indent}<data name="${encode(name)}" xml:space="preserve">\r\n` +
+      `${indent}${indent}<value>${encode(value)}</value>\r\n` +
+      (comment ? `${indent}${indent}<comment>${encode(comment)}</comment>\r\n` : "") +
+      `${indent}</data>\r\n`).join("");
+
+    return '<?xml version="1.0" encoding="utf-8"?>\r\n<root>\r\n' + body + "</root>";
+  }
+
+  const state = {
+    source: { culture: "en-US", name: "sample", ...ReswFile.parse(SAMPLE_SOURCE) },
+    target: { culture: "it-IT", name: "sample", ...ReswFile.parse(SAMPLE_TARGET), handle: null },
+    selected: null,
+    dirty: false,
+    findings: new Map(),
+    filter: "",
+    only: { problems: false, missing: false, plural: false },
+  };
+
+  // --------------------------------------------------------------------------------------- the I/O
+  //
+  // Three ways in and out, because where this page runs decides what it is allowed to do. Inside a
+  // Visual Studio tool window the host passes the files through; on a page with the File System
+  // Access API it opens and saves them itself; anywhere else files arrive by drag and drop and the
+  // result is copied out as text, because a page in a sandboxed frame cannot hand over a download.
+
+  const host = window.chrome && window.chrome.webview ? window.chrome.webview : null;
+  const canPick = typeof window.showOpenFilePicker === "function";
+
+  function describeIo() {
+    const el = document.getElementById("io-mode");
+    el.textContent = host
+      ? "Connected to the editor host"
+      : canPick ? "Opens and saves files directly" : "Drop files in; save copies the text out";
+  }
+
+  async function openFiles() {
+    if (host) {
+      host.postMessage({ type: "openFiles" });
+      return;
+    }
+
+    if (!canPick) {
+      document.body.classList.add("dragging");
+      setTimeout(() => document.body.classList.remove("dragging"), 1400);
+      return;
+    }
+
+    let handles;
+    try {
+      handles = await window.showOpenFilePicker({
+        multiple: true,
+        types: [{ description: "Resource files", accept: { "application/xml": [".resw"] } }],
+      });
+    } catch {
+      return;  // the picker was dismissed
+    }
+
+    const loaded = [];
+    for (const handle of handles.slice(0, 2)) {
+      const file = await handle.getFile();
+      loaded.push({ handle, name: file.name, path: handle.name, text: await file.text() });
+    }
+
+    adopt(loaded);
+  }
+
+  function adopt(loaded) {
+    // Which file is the source and which the translation is decided by the folder each sits in,
+    // because that is where the culture is in a WinUI project: Strings/en-US/Resources.resw.
+    const withCulture = loaded.map((item) => ({ ...item, culture: cultureOf(item) }));
+    withCulture.sort((a, b) => a.culture.localeCompare(b.culture));
+
+    const source = withCulture.find((item) => item.culture === state.source.culture) || withCulture[0];
+    const target = withCulture.find((item) => item !== source) || null;
+
+    try {
+      if (source) {
+        state.source = { culture: source.culture, name: source.name, ...ReswFile.parse(source.text) };
+      }
+      if (target) {
+        state.target = {
+          culture: target.culture,
+          name: target.name,
+          handle: target.handle || null,
+          ...ReswFile.parse(target.text),
+        };
+      }
+    } catch (error) {
+      alertInline(error.message);
+      return;
+    }
+
+    state.selected = null;
+    state.dirty = false;
+    render();
+  }
+
+  function cultureOf(item) {
+    const path = (item.path || item.name || "").replace(/\\/g, "/");
+    const folder = /([a-z]{2,3}(?:-[A-Za-z]{2,8})*)\/[^/]+$/.exec(path);
+    return folder ? folder[1] : (item.name || "file").replace(/\.resw$/i, "");
+  }
+
+  async function save() {
+    const text = ReswFile.serialize(state.target);
+
+    if (host) {
+      host.postMessage({ type: "save", culture: state.target.culture, text });
+      state.dirty = false;
+      render();
+      return;
+    }
+
+    if (state.target.handle) {
+      try {
+        const writable = await state.target.handle.createWritable();
+        await writable.write(text);
+        await writable.close();
+        state.dirty = false;
+        render();
+        return;
+      } catch (error) {
+        alertInline("Saving failed: " + error.message);
+        return;
+      }
+    }
+
+    const dialog = document.getElementById("xml-dialog");
+    document.getElementById("xml-hint").textContent =
+      `${state.target.culture}: the whole file, formatted exactly as it was read. Paste it over the original.`;
+    document.getElementById("xml-text").value = text;
+    dialog.showModal();
+  }
+
+  function alertInline(message) {
+    const el = document.getElementById("stat-dirty");
+    el.textContent = message;
+    el.style.color = "var(--bad)";
+  }
+
+  // --------------------------------------------------------------------------------------- rendering
+
+  function translatable(file) {
+    return file.entries.filter((entry) => entry.translatable);
+  }
+
+  function targetEntry(name, create) {
+    const found = state.target.entries.find(
+      (entry) => entry.translatable && entry.name.toLowerCase() === name.toLowerCase());
+
+    if (found || !create) {
+      return found || null;
+    }
+
+    const entry = { name, value: "", comment: "", translatable: true, raw: null };
+    ReswFile.add(state.target, entry);
+    return entry;
+  }
+
+  function visibleKeys() {
+    const filter = state.filter.trim().toLowerCase();
+
+    return translatable(state.source).filter((entry) => {
+      const translation = targetEntry(entry.name, false);
+      const findings = state.findings.get(entry.name) || [];
+
+      if (state.only.problems && findings.length === 0) { return false; }
+      if (state.only.missing && translation && translation.value.trim()) { return false; }
+      if (state.only.plural && !readPlural(entry.value)) { return false; }
+
+      if (!filter) { return true; }
+
+      return entry.name.toLowerCase().includes(filter)
+        || entry.value.toLowerCase().includes(filter)
+        || (translation ? translation.value.toLowerCase().includes(filter) : false);
+    });
+  }
+
+  function render() {
+    state.findings = validate(state);
+
+    document.getElementById("source-file").innerHTML =
+      `<b>${escapeHtml(state.source.culture)}</b> <i>${escapeHtml(state.source.name)}</i>`;
+    document.getElementById("target-file").innerHTML =
+      `<b>${escapeHtml(state.target.culture)}</b> <i>${escapeHtml(state.target.name)}</i>`;
+
+    const keys = translatable(state.source);
+    const translated = keys.filter((entry) => {
+      const item = targetEntry(entry.name, false);
+      return item && item.value.trim();
+    }).length;
+
+    let problems = 0;
+    for (const list of state.findings.values()) {
+      problems += list.length;
+    }
+
+    document.getElementById("stat-keys").textContent = keys.length;
+    document.getElementById("stat-translated").textContent = translated;
+    document.getElementById("stat-problems").textContent = problems;
+    document.getElementById("stat-categories").textContent =
+      `${state.target.culture} needs ${categoriesFor(state.target.culture, "plural").join(" · ")}`;
+
+    const dirty = document.getElementById("stat-dirty");
+    dirty.style.color = "";
+    dirty.textContent = state.dirty ? "Unsaved changes" : "";
+    document.getElementById("save").disabled = !state.dirty;
+
+    renderList();
+    renderEditor();
+  }
+
+  function renderList() {
+    const list = document.getElementById("list");
+    const visible = visibleKeys();
+    list.replaceChildren();
+
+    if (visible.length === 0) {
+      const empty = document.createElement("p");
+      empty.className = "empty";
+      empty.style.padding = "12px";
+      empty.textContent = "No key matches.";
+      list.append(empty);
+      return;
+    }
+
+    for (const entry of visible) {
+      const findings = state.findings.get(entry.name) || [];
+      const translation = targetEntry(entry.name, false);
+      const worst = findings.some((f) => f.severity === "bad") ? "bad"
+        : findings.length ? "warn" : "ok";
+
+      const row = document.createElement("button");
+      row.className = "row";
+      row.type = "button";
+      row.setAttribute("role", "option");
+      row.setAttribute("aria-current", String(entry.name === state.selected));
+      row.addEventListener("click", () => { state.selected = entry.name; render(); });
+
+      const name = document.createElement("span");
+      name.className = "name";
+      name.textContent = entry.name;
+
+      const dot = document.createElement("span");
+      dot.className = "dot " + worst;
+      dot.title = findings.length ? findings.map((f) => f.code).join(", ") : "No findings";
+
+      const preview = document.createElement("span");
+      preview.className = "preview";
+      preview.textContent = translation && translation.value
+        ? translation.value
+        : "— not translated —";
+
+      row.append(name, dot, preview);
+      list.append(row);
+    }
+  }
+
+  function renderEditor() {
+    const editor = document.getElementById("editor");
+    editor.replaceChildren();
+
+    const entry = state.selected
+      ? translatable(state.source).find((item) => item.name === state.selected)
+      : null;
+
+    if (!entry) {
+      const hint = document.createElement("p");
+      hint.className = "empty";
+      hint.innerHTML = "Pick a key to translate it."
+        + "<br><br>Each file keeps its own formatting when saved — indentation, line endings and the"
+        + " byte order mark are the ones it was read with, so a one-word change stays a one-line diff.";
+      editor.append(hint);
+      return;
+    }
+
+    const translation = targetEntry(entry.name, true);
+
+    const title = document.createElement("h1");
+    title.className = "key-title";
+    title.textContent = entry.name;
+
+    const sub = document.createElement("p");
+    sub.className = "sub";
+    sub.textContent = entry.comment || "No translator note.";
+
+    editor.append(title, sub);
+
+    const sourceSection = document.createElement("section");
+    sourceSection.innerHTML = `<h2>${escapeHtml(state.source.culture)}</h2>`;
+    const sourceBox = document.createElement("div");
+    sourceBox.className = "source";
+    sourceBox.textContent = entry.value;
+    sourceSection.append(sourceBox);
+    editor.append(sourceSection);
+
+    const plural = readPlural(translation.value) || (readPlural(entry.value) ? blankPlural(entry.value) : null);
+    const section = document.createElement("section");
+    section.innerHTML = `<h2>${escapeHtml(state.target.culture)}</h2>`;
+
+    if (plural && !plural.error) {
+      section.append(pluralEditor(plural, translation));
+    } else {
+      section.append(textEditor(translation, plural));
+    }
+
+    editor.append(section);
+
+    const comment = document.createElement("section");
+    comment.innerHTML = "<h2>Translator note</h2>";
+    const commentBox = document.createElement("textarea");
+    commentBox.rows = 2;
+    commentBox.value = translation.comment;
+    commentBox.addEventListener("input", () => {
+      translation.comment = commentBox.value;
+      state.dirty = true;
+      document.getElementById("save").disabled = false;
+      document.getElementById("stat-dirty").textContent = "Unsaved changes";
+    });
+    comment.append(commentBox);
+    editor.append(comment);
+
+    editor.append(findingsFor(entry.name));
+  }
+
+  function blankPlural(sourceValue) {
+    // A message that is a plural in the source starts as one here too, with the categories this
+    // language actually has rather than the ones English happens to need.
+    const source = readPlural(sourceValue);
+    const kind = source ? source.kind : "plural";
+    const argument = source ? source.argument : "count";
+
+    return {
+      argument,
+      kind,
+      offset: source ? source.offset : null,
+      branches: categoriesFor(state.target.culture, kind).map((category) => ({ category, body: "" })),
+      error: null,
+    };
+  }
+
+  function commit(translation, value) {
+    translation.value = value;
+    state.dirty = true;
+    render();
+  }
+
+  function textEditor(translation, failedPlural) {
+    const wrap = document.createElement("div");
+
+    if (failedPlural && failedPlural.error) {
+      const note = document.createElement("div");
+      note.className = "finding bad";
+      note.innerHTML = `<code>LK009</code><span>${escapeHtml(failedPlural.error)} Fix it here and the branch editor comes back.</span>`;
+      wrap.append(note);
+    }
+
+    const box = document.createElement("textarea");
+    box.rows = 3;
+    box.value = translation.value;
+    box.spellcheck = true;
+    box.addEventListener("change", () => commit(translation, box.value));
+    wrap.append(box);
+
+    const source = readPlural(state.source.entries.find((e) => e.name === state.selected).value);
+    if (source) {
+      const make = document.createElement("button");
+      make.textContent = `Make it a plural (${categoriesFor(state.target.culture, source.kind).join(", ")})`;
+      make.style.marginTop = "8px";
+      make.addEventListener("click", () => commit(translation, writePlural(blankPlural(
+        state.source.entries.find((e) => e.name === state.selected).value))));
+      wrap.append(make);
+    }
+
+    return wrap;
+  }
+
+  function pluralEditor(plural, translation) {
+    const wrap = document.createElement("div");
+
+    const mode = document.createElement("div");
+    mode.className = "mode";
+    const asText = document.createElement("button");
+    asText.textContent = "Edit as text";
+    asText.addEventListener("click", () => {
+      state.asText = state.selected;
+      renderAsText(translation);
+    });
+    mode.append(asText);
+    wrap.append(mode);
+
+    const needed = categoriesFor(state.target.culture, plural.kind);
+    const branches = document.createElement("div");
+    branches.className = "branches";
+
+    for (const branch of plural.branches) {
+      branches.append(branchRow(plural, branch, translation, needed));
+    }
+
+    for (const category of needed) {
+      if (plural.branches.some((branch) => branch.category === category)) { continue; }
+
+      const row = document.createElement("div");
+      row.className = "branch";
+      const label = document.createElement("div");
+      label.className = "cat";
+      label.innerHTML = `${category}<small>missing</small>`;
+      const add = document.createElement("button");
+      add.textContent = `Add ${category}`;
+      add.addEventListener("click", () => {
+        plural.branches.push({ category, body: "" });
+        plural.branches.sort((a, b) => order(a.category) - order(b.category));
+        commit(translation, writePlural(plural));
+      });
+      const spacer = document.createElement("div");
+      row.append(label, add, spacer);
+      branches.append(row);
+    }
+
+    wrap.append(branches);
+
+    const exact = document.createElement("button");
+    exact.textContent = "Add an exact count (=0)";
+    exact.style.marginTop = "8px";
+    exact.addEventListener("click", () => {
+      let n = 0;
+      while (plural.branches.some((branch) => branch.category === "=" + n)) { n += 1; }
+      plural.branches.unshift({ category: "=" + n, body: "" });
+      commit(translation, writePlural(plural));
+    });
+    wrap.append(exact);
+    wrap.append(previewTable(plural));
+
+    return wrap;
+  }
+
+  function order(category) {
+    const index = CATEGORIES.indexOf(category);
+    return category.startsWith("=") ? -1 : index < 0 ? 99 : index;
+  }
+
+  function branchRow(plural, branch, translation, needed) {
+    const row = document.createElement("div");
+    row.className = "branch";
+
+    const label = document.createElement("div");
+    label.className = "cat";
+    const exampleText = branch.category.startsWith("=")
+      ? "exactly " + branch.category.slice(1)
+      : needed.includes(branch.category) ? examples(branch.category) : "not used by this language";
+    label.innerHTML = `${escapeHtml(branch.category)}<small>${escapeHtml(exampleText)}</small>`;
+
+    const box = document.createElement("textarea");
+    box.rows = 2;
+    box.value = branch.body;
+    box.spellcheck = true;
+    box.addEventListener("change", () => {
+      branch.body = box.value;
+      commit(translation, writePlural(plural));
+    });
+
+    const remove = document.createElement("button");
+    remove.textContent = "×";
+    remove.title = "Remove this branch";
+    remove.disabled = branch.category === "other";
+    remove.addEventListener("click", () => {
+      plural.branches = plural.branches.filter((item) => item !== branch);
+      commit(translation, writePlural(plural));
+    });
+
+    row.append(label, box, remove);
+    return row;
+  }
+
+  function examples(category) {
+    // Which numbers actually land in this category, asked of the same CLDR data the engine uses.
+    const found = [];
+    try {
+      const rules = new Intl.PluralRules(state.target.culture);
+      for (let n = 0; n <= 120 && found.length < 4; n++) {
+        if (rules.select(n) === category) { found.push(n); }
+      }
+    } catch {
+      return "";
+    }
+
+    return found.length ? found.join(", ") + (found.length === 4 ? "…" : "") : "never";
+  }
+
+  function previewTable(plural) {
+    const section = document.createElement("section");
+    section.innerHTML = "<h2>How it reads</h2>";
+
+    const table = document.createElement("table");
+    table.className = "preview-table";
+    table.innerHTML = "<thead><tr><th>Count</th><th>Category</th><th>Result</th></tr></thead>";
+    const body = document.createElement("tbody");
+
+    for (const count of [0, 1, 2, 3, 5, 11, 21, 101]) {
+      const result = formatPlural(plural, state.target.culture, count);
+      const row = document.createElement("tr");
+
+      const n = document.createElement("td");
+      n.className = "n";
+      n.textContent = count;
+
+      const category = document.createElement("td");
+      category.className = "c";
+      category.textContent = result.category;
+
+      const text = document.createElement("td");
+      text.textContent = result.text || "—";
+
+      row.append(n, category, text);
+      body.append(row);
+    }
+
+    table.append(body);
+    section.append(table);
+    return section;
+  }
+
+  function renderAsText(translation) {
+    const section = document.querySelectorAll(".editor section")[1];
+    section.replaceChildren();
+    section.innerHTML = `<h2>${escapeHtml(state.target.culture)}</h2>`;
+    section.append(textEditor(translation, null));
+  }
+
+  function findingsFor(name) {
+    const section = document.createElement("section");
+    const findings = state.findings.get(name) || [];
+    section.innerHTML = "<h2>Findings</h2>";
+
+    if (findings.length === 0) {
+      const ok = document.createElement("p");
+      ok.className = "empty";
+      ok.textContent = "Nothing to report. The build will say the same.";
+      section.append(ok);
+      return section;
+    }
+
+    for (const finding of findings) {
+      const box = document.createElement("div");
+      box.className = "finding " + finding.severity;
+      box.innerHTML = `<code>${finding.code}</code><span>${escapeHtml(finding.text)}</span>`;
+      section.append(box);
+    }
+
+    return section;
+  }
+
+  function escapeHtml(text) {
+    return String(text).replace(/[&<>"]/g, (char) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[char]);
+  }
+
+  // ------------------------------------------------------------------------------------- the wiring
+
+  document.getElementById("open").addEventListener("click", openFiles);
+  document.getElementById("save").addEventListener("click", save);
+
+  document.getElementById("filter").addEventListener("input", (event) => {
+    state.filter = event.target.value;
+    renderList();
+  });
+
+  for (const key of ["problems", "missing", "plural"]) {
+    const chip = document.getElementById("chip-" + key);
+    chip.addEventListener("click", () => {
+      state.only[key] = !state.only[key];
+      chip.setAttribute("aria-pressed", String(state.only[key]));
+      renderList();
+    });
+  }
+
+  document.getElementById("xml-copy").addEventListener("click", async () => {
+    const text = document.getElementById("xml-text");
+    try {
+      await navigator.clipboard.writeText(text.value);
+      document.getElementById("xml-copy").textContent = "Copied";
+    } catch {
+      text.select();
+    }
+  });
+
+  document.getElementById("xml-close").addEventListener("click", () => {
+    document.getElementById("xml-dialog").close();
+  });
+
+  for (const type of ["dragenter", "dragover"]) {
+    window.addEventListener(type, (event) => {
+      event.preventDefault();
+      document.body.classList.add("dragging");
+    });
+  }
+
+  window.addEventListener("dragleave", (event) => {
+    if (event.relatedTarget === null) { document.body.classList.remove("dragging"); }
+  });
+
+  window.addEventListener("drop", async (event) => {
+    event.preventDefault();
+    document.body.classList.remove("dragging");
+
+    const files = [...(event.dataTransfer ? event.dataTransfer.files : [])]
+      .filter((file) => /\.resw$/i.test(file.name))
+      .slice(0, 2);
+
+    if (files.length === 0) { return; }
+
+    const loaded = [];
+    for (const file of files) {
+      loaded.push({
+        handle: null,
+        name: file.name,
+        path: file.webkitRelativePath || file.name,
+        text: await file.text(),
+      });
+    }
+
+    adopt(loaded);
+  });
+
+  // The host sends the open files in and takes the saved text back out.
+  if (host) {
+    host.addEventListener("message", (event) => {
+      const message = event.data;
+      if (message && message.type === "files" && Array.isArray(message.files)) {
+        adopt(message.files);
+      }
+
+      // The host says what it found here as well as in its own status line, because this page draws
+      // its own colours and is the one place a message cannot be lost to a theme.
+      if (message && message.type === "status" && typeof message.text === "string") {
+        document.getElementById("io-mode").textContent = message.text;
+      }
+    });
+    host.postMessage({ type: "ready" });
+  }
+
+  describeIo();
+  render();
+</script>

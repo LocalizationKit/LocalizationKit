@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>LocalizationKit.Sample.Console</RootNamespace>
+    <!-- Published trimmed and AOT by CI; the switches live here so `dotnet publish` alone is enough.
+         TrimMode full is the aggressive one: anything the trimmer cannot see a use for is removed. -->
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>full</TrimMode>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\LocalizationKit\LocalizationKit.csproj" />
+    <ProjectReference Include="..\..\src\LocalizationKit.Messages.Icu\LocalizationKit.Messages.Icu.csproj" />
+    <ProjectReference Include="..\..\src\LocalizationKit.Resources.Json\LocalizationKit.Resources.Json.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Localization\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

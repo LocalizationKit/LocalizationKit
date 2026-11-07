@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <PackageId>LocalizationKit.Resources.Resw</PackageId>
+    <Description>Reads WinRT .resw resource files for LocalizationKit, as loose files or embedded resources, so translations can be swapped at runtime without going through a compiled PRI.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LocalizationKit\LocalizationKit.csproj" />
+  </ItemGroup>
+
+</Project>

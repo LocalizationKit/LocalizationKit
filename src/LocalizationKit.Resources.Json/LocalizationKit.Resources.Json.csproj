@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <PackageId>LocalizationKit.Resources.Json</PackageId>
+    <Description>Reads JSON translation files for LocalizationKit, flat or nested, as loose files or embedded resources.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LocalizationKit\LocalizationKit.csproj" />
+  </ItemGroup>
+
+</Project>

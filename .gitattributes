@@ -1,0 +1,16 @@
+# The tooling asserts exact bytes for files Visual Studio writes, so line endings are not left to
+# each developer's git configuration.
+* text=auto eol=crlf
+
+*.cs text eol=crlf
+*.csproj text eol=crlf
+*.props text eol=crlf
+*.targets text eol=crlf
+*.slnx text eol=crlf
+*.resw text eol=crlf
+*.md text eol=crlf
+*.json text eol=crlf
+
+*.png binary
+*.ico binary
+*.snk binary

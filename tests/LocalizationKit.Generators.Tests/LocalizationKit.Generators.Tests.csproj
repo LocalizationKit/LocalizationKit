@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Referenced as a library, not as an analyzer: these tests drive it through a generator driver
+         so they can read the source it produces and then compile it. -->
+    <ProjectReference Include="..\..\src\LocalizationKit.Generators\LocalizationKit.Generators.csproj" />
+  </ItemGroup>
+
+</Project>

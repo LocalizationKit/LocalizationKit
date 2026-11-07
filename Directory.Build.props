@@ -1,0 +1,65 @@
+﻿<Project>
+
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <!-- A globalization library must never be built against the invariant mode. -->
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <!-- The public API is the product here, so undocumented public members are a build error. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- One output folder per configuration, whatever platform a consuming application builds
+         for. A managed library's output is architecture-neutral, and a second platform folder
+         holding the same assembly puts two copies of it, and of its .pdb, into an MSIX payload:
+         'Payload contains two or more files with the same destination path'. -->
+    <AppendPlatformToOutputPath>false</AppendPlatformToOutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Trimming and native AOT">
+    <!-- Claiming this turns on the trim, single-file and AOT analyzers, so the claim is checked on
+         every build rather than asserted in a readme. A library that an application can trim has to
+         be free of reflection the trimmer cannot see through; where this library does reflect, the
+         member is annotated so the trimmer keeps what it needs.
+
+         Each project opts in, because the claim is not true everywhere: see the WinUI and tooling
+         projects, which say why not. -->
+    <IsAotCompatible Condition="'$(IsAotCompatible)' == '' AND '$(IsPackable)' != 'false'">true</IsAotCompatible>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Product>LocalizationKit</Product>
+    <Authors>Francesco Mazzella</Authors>
+    <Copyright>Copyright (c) 2026 Francesco Mazzella</Copyright>
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>localization;i18n;globalization;resw;icu;cldr</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <!-- nuget.org shows this on the package page, and a package without it looks abandoned before
+         anyone has read a line of it. The repository URL is separate and comes from the git remote,
+         through SourceLink below. -->
+    <PackageProjectUrl Condition="'$(PackageProjectUrl)' == ''">https://github.com/LocalizationKit/LocalizationKit</PackageProjectUrl>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Debugging a published package">
+    <!-- SourceLink ships in the SDK: these are the switches that make a .nupkg debuggable, so a
+         consumer can step into this code from their own project. The repository URL comes from the
+         git remote, so it is correct without being written down here. -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IsPackable)' != 'false'">
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="/" Visible="false" />
+    <None Include="$(MSBuildThisFileDirectory)LICENSE" Pack="true" PackagePath="/" Visible="false" />
+    <None Include="$(MSBuildThisFileDirectory)assets\icon.png" Pack="true" PackagePath="/" Visible="false" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,35 @@
+<Project>
+
+  <!-- Defaults, set before the consuming project is read so every one of them can be overridden there. -->
+  <PropertyGroup>
+    <!-- Validate resources on build. On by default: a malformed message or a PRI scope collision is
+         cheaper to see here than in MakePri's output or at runtime. -->
+    <LocalizationKitValidate Condition="'$(LocalizationKitValidate)' == ''">true</LocalizationKitValidate>
+
+    <!-- Missing translations and undeclared culture folders are warnings. Turn this on for release
+         builds or CI, where a language is expected to be complete. -->
+    <LocalizationKitValidateWarningsAsErrors Condition="'$(LocalizationKitValidateWarningsAsErrors)' == ''">false</LocalizationKitValidateWarningsAsErrors>
+
+    <!-- Reconciling .csproj.user and the Resource Explorer settings writes gitignored developer
+         state, so it is opt-in and only ever runs in Debug. -->
+    <LocalizationKitSyncIde Condition="'$(LocalizationKitSyncIde)' == ''">false</LocalizationKitSyncIde>
+
+    <!-- Where the culture folders live, and what the resource file in each is called. These match the
+         CLI's own defaults and the WinUI convention. -->
+    <LocalizationKitResourcesPath Condition="'$(LocalizationKitResourcesPath)' == ''">Strings</LocalizationKitResourcesPath>
+    <LocalizationKitResourceFileName Condition="'$(LocalizationKitResourceFileName)' == ''">Resources.resw</LocalizationKitResourceFileName>
+
+    <!-- Generate a constant for every resource key of the default culture, so a renamed or deleted
+         key is a compile error rather than a missing string at runtime. -->
+    <LocalizationKitGenerateKeys Condition="'$(LocalizationKitGenerateKeys)' == ''">true</LocalizationKitGenerateKeys>
+    <LocalizationKitKeysClass Condition="'$(LocalizationKitKeysClass)' == ''">LocalizationKeys</LocalizationKitKeysClass>
+    <!-- internal by default: the keys belong to the project that owns the resources, and a public
+         surface is something to opt into. -->
+    <LocalizationKitKeysAccessibility Condition="'$(LocalizationKitKeysAccessibility)' == ''">internal</LocalizationKitKeysAccessibility>
+
+    <!-- The copy of the CLI carried in this package. A project that consumes LocalizationKit from
+         source rather than from a package sets LocalizationKitCliAssembly instead. -->
+    <LocalizationKitToolDirectory Condition="'$(LocalizationKitToolDirectory)' == '' AND Exists('$(MSBuildThisFileDirectory)..\tools\cli\LocalizationKit.Cli.dll')">$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..', 'tools', 'cli'))</LocalizationKitToolDirectory>
+  </PropertyGroup>
+
+</Project>
