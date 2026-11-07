@@ -1,0 +1,82 @@
+name: Docs
+
+# The site is what main says, so it is rebuilt when main moves. A pull request builds it too, and
+# does not deploy: a broken link should fail review rather than the site.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "src/**"
+      - ".config/dotnet-tools.json"
+      - ".github/workflows/docs.yml"
+  pull_request:
+    paths:
+      - "docs/**"
+      - "src/**"
+  workflow_dispatch:
+
+# A queued run should wait for the one in progress rather than race it to the same site, but a
+# deploy already under way is not worth cancelling.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # Windows, because the metadata step loads every project and three of them target -windows
+    # frameworks that cannot be loaded anywhere else.
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      # LocalizationKit.Maui cannot be loaded without its workload, and the metadata step loads it.
+      - name: Install the workloads the integrations need
+        run: dotnet workload restore LocalizationKit.slnx
+
+      # Pinned in .config/dotnet-tools.json, so CI and a local build are the same DocFX.
+      - name: Restore the tools
+        run: dotnet tool restore
+
+      - name: Build the site
+        run: dotnet docfx docs/docfx.json --warningsAsErrors
+
+      # The editor is copied in as a resource, so DocFX cannot verify the links that point at it —
+      # a link to a resource has no content file to resolve against, and the pages therefore name
+      # the hosted URL directly. This is what keeps that URL honest.
+      - name: Check the editor was published with the site
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "_site/editor/index.html")) {
+            throw "_site/editor/index.html is missing, so the editor links in the docs are dead. Check the resource entry in docs/docfx.json."
+          }
+          Write-Host "The editor is in the site."
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    if: github.event_name != 'pull_request'
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

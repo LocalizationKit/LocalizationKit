@@ -38,10 +38,30 @@ jobs:
         shell: pwsh
         run: |
           git fetch --no-tags origin main:refs/remotes/origin/main
+
+          # --is-ancestor answers with its exit code, so a 1 here is the answer and not a failure.
           git merge-base --is-ancestor $env:GITHUB_SHA origin/main
-          if ($LASTEXITCODE -ne 0) {
-            throw "${{ github.ref_name }} points at a commit that is not on main. Releases are tags on main: land the work on main first, then tag it."
+          $onMain = $LASTEXITCODE -eq 0
+
+          if (-not $onMain) {
+            # Say what the tag actually points at. The usual cause is tagging from another branch,
+            # and without this the message sends you looking at the wrong commit.
+            $subject = git log -1 --format=%s $env:GITHUB_SHA
+            $short = $env:GITHUB_SHA.Substring(0, 8)
+            $head = git rev-parse --short origin/main
+            throw @"
+          ${{ github.ref_name }} points at $short "$subject", which is not on main (main is at $head).
+
+          Releases are tags on main. This usually means the tag was created while another branch was
+          checked out. Delete it and tag main explicitly:
+
+            git tag -d ${{ github.ref_name }}
+            git push origin :refs/tags/${{ github.ref_name }}
+            git tag ${{ github.ref_name }} origin/main
+            git push origin ${{ github.ref_name }}
+          "@
           }
+
           Write-Host "${{ github.ref_name }} is on main."
 
       - uses: actions/setup-dotnet@v4

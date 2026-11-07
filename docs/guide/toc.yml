@@ -1,0 +1,43 @@
+- name: Introduction
+  href: introduction.md
+- name: Getting Started
+  href: getting-started.md
+- name: Core Concepts
+  href: core-concepts.md
+
+- name: Features
+  items:
+    - name: Resource Formats
+      href: resources.md
+    - name: Pluralization
+      href: pluralization.md
+    - name: Validation on Build
+      href: validation.md
+    - name: Typed Keys
+      href: typed-keys.md
+    - name: Pseudolocalization
+      href: pseudolocalization.md
+    - name: Trimming and Native AOT
+      href: trimming.md
+
+- name: UI Frameworks
+  items:
+    - name: WinUI 3
+      href: winui.md
+    - name: WPF
+      href: wpf.md
+    - name: MAUI
+      href: maui.md
+    - name: ASP.NET Core
+      href: aspnet-core.md
+    - name: IStringLocalizer
+      href: stringlocalizer.md
+
+- name: Tooling
+  items:
+    - name: The Editor
+      href: editor.md
+    - name: The CLI
+      href: cli.md
+    - name: Handing a Culture to a Translator
+      href: translators.md

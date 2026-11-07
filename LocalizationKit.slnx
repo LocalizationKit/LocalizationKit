@@ -31,6 +31,9 @@
     <Project Path="samples/Console/LocalizationKit.Sample.Console.csproj" />
     <Project Path="samples/Web/LocalizationKit.Sample.Web.csproj" />
   </Folder>
+  <Folder Name="/docs/">
+    <Project Path="docs/snippets/LocalizationKit.Docs.Snippets.csproj" />
+  </Folder>
   <Folder Name="/tools/">
     <Project Path="tools/LocalizationKit.Cli/LocalizationKit.Cli.csproj" />
   </Folder>

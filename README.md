@@ -31,7 +31,7 @@ and YAML providers are available too, and writing another is one interface.
 ## Install
 
 ```
-dotnet add package LocalizationKit
+dotnet add package LocalizationKit.Core
 dotnet add package LocalizationKit.Resources.Resw
 dotnet add package LocalizationKit.Messages.Icu      # plurals, ordinals, select
 ```
@@ -530,7 +530,7 @@ see nothing.
 
 | Package | What it adds |
 | ------- | ------------ |
-| `LocalizationKit` | Core engine, abstractions, DI, culture context, fallback, caching, formatting |
+| `LocalizationKit.Core` | Core engine, abstractions, DI, culture context, fallback, caching, formatting |
 | `LocalizationKit.Resources.Resw` | `.resw` provider — loose files, embedded resources, overrides |
 | `LocalizationKit.Resources.Json` | JSON provider, flat or nested keys |
 | `LocalizationKit.Resources.Yaml` | YAML provider, flat or nested keys |

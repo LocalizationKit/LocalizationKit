@@ -31,3 +31,8 @@ Thumbs.db
 ## Visual Studio extension build output
 tools/LocalizationKit.VsExtension/bin/
 tools/LocalizationKit.VsExtension/obj/
+
+## Documentation site
+_site/
+docs/api/*.yml
+docs/api/.manifest

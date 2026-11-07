@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Every C# example on the documentation site lives in this project and is pulled into the Markdown
+    by region, so "the examples use real APIs" is something the compiler enforces rather than
+    something anyone has to remember. Change a signature and the docs build fails here, which is the
+    point.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <!-- Examples, not API: there is nothing here for anyone to reference or to document. -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <IsAotCompatible>false</IsAotCompatible>
+    <!-- Snippets show calls in isolation, so results that a real caller would use go unused here. -->
+    <NoWarn>$(NoWarn);CA1812;CS8321</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Project references rather than packages: the examples must compile against this commit,
+         not against whatever is on NuGet. -->
+    <ProjectReference Include="..\..\src\LocalizationKit\LocalizationKit.csproj" />
+    <ProjectReference Include="..\..\src\LocalizationKit.Resources.Resw\LocalizationKit.Resources.Resw.csproj" />
+    <ProjectReference Include="..\..\src\LocalizationKit.Resources.Json\LocalizationKit.Resources.Json.csproj" />
+    <ProjectReference Include="..\..\src\LocalizationKit.Resources.Yaml\LocalizationKit.Resources.Yaml.csproj" />
+    <ProjectReference Include="..\..\src\LocalizationKit.Messages.Icu\LocalizationKit.Messages.Icu.csproj" />
+    <ProjectReference Include="..\..\src\LocalizationKit.StringLocalizer\LocalizationKit.StringLocalizer.csproj" />
+  </ItemGroup>
+
+</Project>
